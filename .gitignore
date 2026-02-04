@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.env
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Node / frontend
+node_modules/
+npm-debug.log*
+frontend/dist/
+
+# IDE
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Cursor / VS Code (keep launch.json)
+# .vscode/

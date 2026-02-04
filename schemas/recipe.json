@@ -1,0 +1,314 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Recipe Schema with Version Control",
+  "type": "object",
+  "required": ["id", "version", "metadata", "ingredients", "steps"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique recipe identifier (UUID)",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "version": {
+      "type": "object",
+      "required": ["number", "created_at", "parent_version"],
+      "properties": {
+        "number": {
+          "type": "string",
+          "description": "Semantic version (major.minor.patch)",
+          "example": "1.2.0"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp"
+        },
+        "parent_version": {
+          "type": ["string", "null"],
+          "description": "Version this was forked from, null for initial version"
+        },
+        "commit_message": {
+          "type": "string",
+          "description": "Description of changes in this version",
+          "example": "Reduced sugar by 25%, added vanilla extract"
+        },
+        "author": {
+          "type": "string",
+          "description": "User who created this version"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "example": "Chocolate Chip Cookies"
+        },
+        "description": {
+          "type": "string"
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["webpage", "instagram", "youtube", "manual", "voice"],
+              "description": "Where this recipe was imported from"
+            },
+            "url": {
+              "type": "string",
+              "description": "Original URL if applicable"
+            },
+            "author": {
+              "type": "string",
+              "description": "Original recipe author/creator"
+            },
+            "imported_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "cuisine": {
+          "type": "string",
+          "example": "Italian"
+        },
+        "course": {
+          "type": "string",
+          "enum": ["appetizer", "main", "side", "dessert", "beverage", "snack"],
+          "example": "dessert"
+        },
+        "dietary_tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["vegetarian", "vegan", "gluten-free", "dairy-free", "nut-free", "keto", "paleo"]
+          }
+        },
+        "prep_time_minutes": {
+          "type": "integer"
+        },
+        "cook_time_minutes": {
+          "type": "integer"
+        },
+        "total_time_minutes": {
+          "type": "integer"
+        },
+        "servings": {
+          "type": "integer"
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "medium", "hard"]
+        },
+        "rating": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        }
+      }
+    },
+    "ingredients": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique ingredient ID for tracking changes",
+            "example": "ing_001"
+          },
+          "name": {
+            "type": "string",
+            "example": "all-purpose flour"
+          },
+          "quantity": {
+            "type": "number",
+            "example": 2.5
+          },
+          "unit": {
+            "type": "string",
+            "example": "cups"
+          },
+          "preparation": {
+            "type": "string",
+            "description": "How ingredient should be prepared",
+            "example": "sifted"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Substitutions or special instructions",
+            "example": "or use cake flour for lighter texture"
+          },
+          "group": {
+            "type": "string",
+            "description": "Group ingredients (e.g., 'For the dough', 'For the sauce')",
+            "example": "For the dough"
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "order", "instruction"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique step ID for tracking changes",
+            "example": "step_001"
+          },
+          "order": {
+            "type": "integer",
+            "description": "Step sequence number"
+          },
+          "instruction": {
+            "type": "string",
+            "example": "Preheat oven to 350°F (175°C)"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "description": "How long this step takes"
+          },
+          "temperature": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "integer"
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["F", "C"]
+              }
+            }
+          },
+          "timer": {
+            "type": "boolean",
+            "description": "Whether this step requires a timer",
+            "default": false
+          },
+          "notes": {
+            "type": "string",
+            "description": "Tips or warnings for this step"
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["image", "video"]
+                },
+                "url": {
+                  "type": "string"
+                },
+                "caption": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "equipment": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "example": ["stand mixer", "9x13 baking pan", "parchment paper"]
+    },
+    "notes": {
+      "type": "array",
+      "description": "General notes, tips, or variations",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["tip", "substitution", "storage", "variation", "warning"],
+            "example": "storage"
+          },
+          "content": {
+            "type": "string",
+            "example": "Store in airtight container for up to 5 days"
+          }
+        }
+      }
+    },
+    "nutrition": {
+      "type": "object",
+      "description": "Per serving nutrition information",
+      "properties": {
+        "calories": {
+          "type": "integer"
+        },
+        "protein_g": {
+          "type": "number"
+        },
+        "carbs_g": {
+          "type": "number"
+        },
+        "fat_g": {
+          "type": "number"
+        },
+        "fiber_g": {
+          "type": "number"
+        },
+        "sodium_mg": {
+          "type": "integer"
+        }
+      }
+    },
+    "cooking_log": {
+      "type": "array",
+      "description": "Personal cooking history with this recipe version",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "notes": {
+            "type": "string",
+            "description": "What worked, what didn't"
+          },
+          "modifications": {
+            "type": "string",
+            "description": "Changes made during this cook"
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "URLs to photos of results"
+            }
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User-defined tags for organization",
+      "example": ["family-favorite", "quick-weeknight", "meal-prep"]
+    }
+  }
+}
