@@ -8,10 +8,9 @@ import re
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
-from django.conf import settings
 
-import requests
-from readability_lxml import Document
+from django.conf import settings
+from docling.document_converter import DocumentConverter
 
 from .models import RecipeVersion, ParsedRecipeCache
 from .import_prompts import (
@@ -188,43 +187,21 @@ def _parse_recipe_response_text(text: str):
 
 def _fetch_and_preprocess_url(url: str):
     """
-    Fetch URL and preprocess content for AI recipe extraction.
-    - Fetches with requests (15s timeout, 50k char cap).
-    - Uses readability-lxml to extract main content (removes ads, nav, comments).
-    - Converts result to plain text and normalizes whitespace.
+    Fetch URL and preprocess content for AI recipe extraction using docling.
+    - Uses docling DocumentConverter to fetch and parse HTML into structured content
+      (removes ads, nav, boilerplate) and export as Markdown.
+    - Limits input to 50k bytes; output truncated to 50k chars for token limits.
     Returns (content_str, error_str). error_str is None on success.
     """
     try:
-        resp = requests.get(
-            url,
-            timeout=15,
-            headers={'User-Agent': 'ForkLog/1.0 (recipe importer)'},
-        )
-        resp.raise_for_status()
-        raw = resp.content
-        if len(raw) > 50000:
-            raw = raw[:50000]
-        doc = Document(raw)
-        content = doc.summary()  # cleaned HTML (main content, no nav/ads/comments)
+        converter = DocumentConverter()
+        result = converter.convert(source=url)
+        content = result.document.export_to_markdown()
+        if len(content) > 50000:
+            content = content[:50000]
+        return content.strip(), None
     except Exception as e:
         return '', str(e)
-
-    # Convert cleaned HTML to plain text
-    content = re.sub(r'<script[^>]*>[\s\S]*?</script>', '\n', content, flags=re.IGNORECASE)
-    content = re.sub(r'<style[^>]*>[\s\S]*?</style>', '\n', content, flags=re.IGNORECASE)
-    content = re.sub(r'<noscript[^>]*>[\s\S]*?</noscript>', '\n', content, flags=re.IGNORECASE)
-    content = re.sub(r'</(?:p|div|br|li|tr|h[1-6])>', '\n', content, flags=re.IGNORECASE)
-    content = re.sub(r'<br\s*/?>', '\n', content, flags=re.IGNORECASE)
-    content = re.sub(r'<[^>]+>', ' ', content)
-    content = content.replace('&nbsp;', ' ')
-    content = content.replace('&amp;', '&')
-    content = content.replace('&lt;', '<')
-    content = content.replace('&gt;', '>')
-    content = content.replace('&quot;', '"')
-    content = re.sub(r'[ \t]+', ' ', content)
-    content = re.sub(r'\n\s*\n', '\n\n', content)
-    content = content.strip()
-    return content, None
 
 
 def ai_import_recipe_from_webpage(url: str, content: str, language: str = 'en'):

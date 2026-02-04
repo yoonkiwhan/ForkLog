@@ -17,6 +17,8 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+**Important:** Use the **venv’s** `pip` (e.g. `./.venv/bin/pip install -r requirements.txt`) so packages are installed for the same Python that runs the app. If the IDE reports “could not resolve” for imports (e.g. `docling`), select the interpreter **backend/.venv/bin/python** (Command Palette → “Python: Select Interpreter”) so the type checker uses this environment.
+
 Backend runs at **http://127.0.0.1:8000**. Leave this terminal open.
 
 ### 2. Frontend (React + Vite)
