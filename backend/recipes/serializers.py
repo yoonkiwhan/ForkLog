@@ -102,6 +102,16 @@ class RecipeVersionListSerializer(serializers.ModelSerializer):
         return _version_to_schema_version(obj)
 
 
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    """Minimal serializer for POST /recipes/; only name and slug to avoid rejecting extra body fields."""
+    name = serializers.CharField(max_length=255, required=True)
+    slug = serializers.SlugField(max_length=255, required=False, allow_blank=True)
+
+    class Meta:
+        model = Recipe
+        fields = ['name', 'slug']
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     versions = RecipeVersionListSerializer(many=True, read_only=True)
     latest_version = serializers.SerializerMethodField()

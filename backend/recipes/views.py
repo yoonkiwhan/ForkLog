@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from .models import Recipe, RecipeVersion, CookingSession
 from .serializers import (
     RecipeSerializer,
+    RecipeCreateSerializer,
     RecipeListSerializer,
     RecipeVersionSerializer,
     RecipeVersionListSerializer,
@@ -44,7 +45,33 @@ class RecipeListCreate(generics.ListCreateAPIView):
         return _recipes_for_user(self.request)
 
     def get_serializer_class(self):
-        return RecipeListSerializer if self.request.method == 'GET' else RecipeSerializer
+        if self.request.method == 'GET':
+            return RecipeListSerializer
+        if self.request.method == 'POST':
+            return RecipeCreateSerializer
+        return RecipeSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Use only name/slug so extra body fields (metadata, ingredients, etc.) don't cause 400
+        data = request.data or {}
+        name = data.get('name')
+        if name is None or (isinstance(name, str) and not name.strip()):
+            meta = data.get('metadata')
+            meta = meta if isinstance(meta, dict) else {}
+            name = data.get('title') or meta.get('title') or 'Untitled Recipe'
+            name = (name or 'Untitled Recipe').strip() or 'Untitled Recipe'
+        recipe_data = {'name': name}
+        slug_val = data.get('slug')
+        if slug_val is not None and slug_val != '':
+            recipe_data['slug'] = slug_val
+        serializer = self.get_serializer(data=recipe_data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        # Return full recipe (with versions, etc.) using RecipeSerializer
+        recipe = serializer.instance
+        out = RecipeSerializer(recipe).data
+        headers = self.get_success_headers(out)
+        return Response(out, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
         recipe = serializer.save(owner=self.request.user)

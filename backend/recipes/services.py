@@ -195,7 +195,7 @@ def _fetch_and_preprocess_url(url: str):
     """
     try:
         converter = DocumentConverter()
-        result = converter.convert(source=url)
+        result = converter.convert(source=url, )
         content = result.document.export_to_markdown()
         if len(content) > 50000:
             content = content[:50000]
