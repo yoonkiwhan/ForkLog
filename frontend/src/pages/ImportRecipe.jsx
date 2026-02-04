@@ -2,6 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 
+function isValidUrl(text) {
+  const trimmed = (text || "").trim();
+  if (!trimmed) return false;
+  try {
+    const u = new URL(trimmed);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export default function ImportRecipe() {
   const navigate = useNavigate();
   const [source, setSource] = useState("");
@@ -10,17 +21,27 @@ export default function ImportRecipe() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!source.trim()) return;
+    const trimmed = source.trim();
+    if (!trimmed) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await api.ai.import(source.trim());
+      let data;
+      if (isValidUrl(trimmed)) {
+        data = await api.ai.importFromWebpage(trimmed, "", "en");
+      } else {
+        data = await api.ai.import(trimmed);
+      }
       const recipe = await api.recipes.create({
         name: data.name,
         title: data.title,
+        metadata: data.metadata,
         ingredients: data.ingredients ?? [],
         steps: data.steps ?? [],
-        notes: data.notes ?? "",
+        equipment: data.equipment ?? [],
+        notes: Array.isArray(data.notes) ? data.notes : data.notes ?? "",
+        nutrition: data.nutrition,
+        tags: data.tags ?? [],
       });
       navigate(`/recipes/${recipe.slug}`);
     } catch (e) {

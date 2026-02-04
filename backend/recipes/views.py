@@ -228,7 +228,7 @@ def ai_import(request):
     language = (request.data.get('language') or 'en').strip() or 'en'
     source = request.data.get('source', '').strip()
 
-    if url and content is not None:
+    if url is not None:
         # Webpage import: use specialist prompts and optional schema
         result, err = ai_import_recipe_from_webpage(url, content, language)
     elif source:
