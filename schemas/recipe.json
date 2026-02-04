@@ -46,6 +46,17 @@
           "type": "string",
           "example": "Chocolate Chip Cookies"
         },
+        "language": {
+          "type": "string",
+          "description": "ISO 639-1 language code",
+          "example": "en",
+          "enum": ["en", "ko", "ja", "es", "fr", "de", "it", "zh", "pt"]
+        },
+        "translated_title": {
+          "type": "string",
+          "description": "English translation of title if recipe is in another language",
+          "example": "Kimchi Stew"
+        },
         "description": {
           "type": "string"
         },
