@@ -8,8 +8,10 @@ import re
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
-
 from django.conf import settings
+
+import requests
+from readability_lxml import Document
 
 from .models import RecipeVersion, ParsedRecipeCache
 from .import_prompts import (
@@ -184,10 +186,52 @@ def _parse_recipe_response_text(text: str):
     return json.loads(text)
 
 
+def _fetch_and_preprocess_url(url: str):
+    """
+    Fetch URL and preprocess content for AI recipe extraction.
+    - Fetches with requests (15s timeout, 50k char cap).
+    - Uses readability-lxml to extract main content (removes ads, nav, comments).
+    - Converts result to plain text and normalizes whitespace.
+    Returns (content_str, error_str). error_str is None on success.
+    """
+    try:
+        resp = requests.get(
+            url,
+            timeout=15,
+            headers={'User-Agent': 'ForkLog/1.0 (recipe importer)'},
+        )
+        resp.raise_for_status()
+        raw = resp.content
+        if len(raw) > 50000:
+            raw = raw[:50000]
+        doc = Document(raw)
+        content = doc.summary()  # cleaned HTML (main content, no nav/ads/comments)
+    except Exception as e:
+        return '', str(e)
+
+    # Convert cleaned HTML to plain text
+    content = re.sub(r'<script[^>]*>[\s\S]*?</script>', '\n', content, flags=re.IGNORECASE)
+    content = re.sub(r'<style[^>]*>[\s\S]*?</style>', '\n', content, flags=re.IGNORECASE)
+    content = re.sub(r'<noscript[^>]*>[\s\S]*?</noscript>', '\n', content, flags=re.IGNORECASE)
+    content = re.sub(r'</(?:p|div|br|li|tr|h[1-6])>', '\n', content, flags=re.IGNORECASE)
+    content = re.sub(r'<br\s*/?>', '\n', content, flags=re.IGNORECASE)
+    content = re.sub(r'<[^>]+>', ' ', content)
+    content = content.replace('&nbsp;', ' ')
+    content = content.replace('&amp;', '&')
+    content = content.replace('&lt;', '<')
+    content = content.replace('&gt;', '>')
+    content = content.replace('&quot;', '"')
+    content = re.sub(r'[ \t]+', ' ', content)
+    content = re.sub(r'\n\s*\n', '\n\n', content)
+    content = content.strip()
+    return content, None
+
+
 def ai_import_recipe_from_webpage(url: str, content: str, language: str = 'en'):
     """
     Import recipe from webpage content. If the URL was parsed before (any user), return
     cached result from ParsedRecipeCache. Otherwise call AI, store result in cache, then return.
+    If content is empty, fetches the URL and preprocesses the HTML for AI parsing.
     Returns (normalized_dict, error_string). Normalized dict has name, metadata, title, ingredients, steps, equipment, notes, nutrition, tags.
     """
     normalized_url = _normalize_url_for_cache(url)
@@ -195,6 +239,17 @@ def ai_import_recipe_from_webpage(url: str, content: str, language: str = 'en'):
         cached = ParsedRecipeCache.objects.filter(normalized_url=normalized_url).first()
         if cached:
             return dict(cached.result), None
+
+    # If no content, fetch URL and preprocess for AI
+    if content is None or (isinstance(content, str) and not content.strip()):
+        if not url or not url.strip():
+            return None, 'URL is required when content is empty.'
+        content, fetch_err = _fetch_and_preprocess_url(url)
+        if fetch_err:
+            return None, f'Could not fetch URL: {fetch_err}'
+        if not content.strip():
+            return None, 'URL returned no content to parse.'
+
 
     client = _get_client()
     if not client:

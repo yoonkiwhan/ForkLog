@@ -215,8 +215,8 @@ def ai_import(request):
     """
     Import a recipe using Claude.
 
-    **Webpage import (preferred when you have URL + scraped content):**
-    Body: { "url": "https://...", "content": "scraped HTML or text", "language": "en"|"ko"|"ja"|... }
+    **Webpage import:**
+    Body: { "url": "https://...", "content": optional (if omitted, backend fetches and preprocesses the URL), "language": "en"|"ko"|"ja"|... }
     Uses recipe extraction specialist prompts and schema. For Korean, appends Korean-specific instructions.
 
     **Legacy / paste:**
@@ -228,9 +228,9 @@ def ai_import(request):
     language = (request.data.get('language') or 'en').strip() or 'en'
     source = request.data.get('source', '').strip()
 
-    if url is not None:
-        # Webpage import: use specialist prompts and optional schema
-        result, err = ai_import_recipe_from_webpage(url, content, language)
+    if url:
+        # Webpage import: service fetches and preprocesses URL when content is empty
+        result, err = ai_import_recipe_from_webpage(url, content or '', language)
     elif source:
         # Legacy: paste or single URL/text
         result, err = ai_import_recipe(source)
