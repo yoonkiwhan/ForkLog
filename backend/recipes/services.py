@@ -7,10 +7,11 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlparse, urlunparse
 
 from django.conf import settings
 
-from .models import RecipeVersion
+from .models import RecipeVersion, ParsedRecipeCache
 from .import_prompts import (
     get_recipe_import_system_prompt,
     user_prompt_webpage,
@@ -154,6 +155,28 @@ def ai_guide_message(message, recipe_version=None, current_step_index=0, log_ent
         return None, str(e)
 
 
+def _normalize_url_for_cache(url: str) -> str:
+    """Canonical URL for cache lookup: strip fragment, trailing slash, lowercase scheme/host."""
+    if not url or not url.strip():
+        return ''
+    url = url.strip()
+    try:
+        parsed = urlparse(url)
+        # Lowercase scheme and netloc; strip fragment; normalize path (strip trailing slash or use /)
+        path = parsed.path.rstrip('/') or '/'
+        normalized = urlunparse((
+            parsed.scheme.lower(),
+            parsed.netloc.lower(),
+            path,
+            parsed.params,
+            parsed.query,
+            '',  # no fragment
+        ))
+        return normalized
+    except Exception:
+        return url
+
+
 def _parse_recipe_response_text(text: str):
     """Strip markdown/code fences and parse JSON from Claude response."""
     text = re.sub(r'^```(?:json)?\s*', '', text.strip())
@@ -163,10 +186,16 @@ def _parse_recipe_response_text(text: str):
 
 def ai_import_recipe_from_webpage(url: str, content: str, language: str = 'en'):
     """
-    Import recipe from webpage content using the recipe extraction specialist prompts.
-    Uses RECIPE_IMPORT_SYSTEM_PROMPT, user_prompt_webpage, and Korean instructions when language is "ko".
+    Import recipe from webpage content. If the URL was parsed before (any user), return
+    cached result from ParsedRecipeCache. Otherwise call AI, store result in cache, then return.
     Returns (normalized_dict, error_string). Normalized dict has name, metadata, title, ingredients, steps, equipment, notes, nutrition, tags.
     """
+    normalized_url = _normalize_url_for_cache(url)
+    if normalized_url:
+        cached = ParsedRecipeCache.objects.filter(normalized_url=normalized_url).first()
+        if cached:
+            return dict(cached.result), None
+
     client = _get_client()
     if not client:
         return None, 'ANTHROPIC_API_KEY not set. Add it to .env to enable recipe import.'
@@ -202,7 +231,14 @@ def ai_import_recipe_from_webpage(url: str, content: str, language: str = 'en'):
             metadata['source']['url'] = url
             metadata['source']['imported_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         data['metadata'] = metadata
-        return _normalize_import_result(data), None
+        result = _normalize_import_result(data)
+        # Store in public cache for future requests
+        if normalized_url:
+            ParsedRecipeCache.objects.update_or_create(
+                normalized_url=normalized_url,
+                defaults={'url': url[:2048], 'result': result},
+            )
+        return result, None
     except json.JSONDecodeError as e:
         return None, f'Failed to parse recipe JSON: {e}'
     except Exception as e:

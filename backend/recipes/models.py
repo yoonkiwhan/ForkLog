@@ -122,3 +122,22 @@ class CookingSession(models.Model):
 
     def __str__(self):
         return f'Cooking {self.recipe_version} at {self.started_at}'
+
+
+class ParsedRecipeCache(models.Model):
+    """
+    Public cache of URL → parsed recipe (from AI import). Any user requesting the same
+    URL gets the cached result instead of calling the AI API again.
+    """
+    url = models.URLField(max_length=2048, help_text='Original URL as submitted')
+    normalized_url = models.CharField(max_length=2048, unique=True, db_index=True)
+    result = models.JSONField(help_text='Normalized import result: name, metadata, ingredients, steps, etc.')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Parsed recipe cache'
+        verbose_name_plural = 'Parsed recipe cache'
+
+    def __str__(self):
+        return self.normalized_url[:80] + ('…' if len(self.normalized_url) > 80 else '')
