@@ -10,7 +10,9 @@ function sortSteps(steps) {
 
 function stepText(step) {
   if (step == null) return "";
-  return typeof step === "string" ? step : step.instruction ?? step.text ?? "";
+  return typeof step === "string"
+    ? step
+    : (step.instruction ?? step.text ?? "");
 }
 
 function stepDurationMinutes(step) {
@@ -66,7 +68,8 @@ function StepTimer({ defaultMinutes, onTimerEnd }) {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-3xl font-mono font-semibold tabular-nums text-stone-800">
-            {String(displayM).padStart(2, "0")}:{String(displayS).padStart(2, "0")}
+            {String(displayM).padStart(2, "0")}:
+            {String(displayS).padStart(2, "0")}
           </span>
           {!ended && (
             <span className="text-sm text-stone-500">
@@ -115,12 +118,65 @@ function StepTimer({ defaultMinutes, onTimerEnd }) {
   );
 }
 
-// ─── Slide content components ─────────────────────────────────────────────
-function PrepSlide({ version, onNext }) {
+// ─── Clock icon (matches RecipeDetail) ────────────────────────────────────
+function ClockIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
+}
+
+// ─── Time block (same design as RecipeDetail) ─────────────────────────────
+function TimeBlock({ version }) {
   const meta = version?.metadata || {};
   const prep = meta.prep_time_minutes;
   const cook = meta.cook_time_minutes;
   const total = meta.total_time_minutes;
+  if (prep == null && cook == null && total == null) return null;
+  const lines = [];
+  if (prep != null) lines.push({ label: "Prep", value: prep });
+  if (cook != null) lines.push({ label: "Cook", value: cook });
+  if (total != null) lines.push({ label: "Total", value: total });
+  return (
+    <div className="w-[220px] px-4 py-3">
+      <table className="w-full text-sm font-medium">
+        <tbody>
+          {lines.map(({ label, value }, i) => (
+            <tr key={label}>
+              {i === 0 && (
+                <td
+                  rowSpan={lines.length}
+                  className="w-9 align-middle pr-2 text-stone-400"
+                >
+                  <ClockIcon className="h-6 w-6 shrink-0" />
+                </td>
+              )}
+              <td className="py-0.5 text-stone-300">{label}</td>
+              <td className="py-0.5 text-right tabular-nums text-stone-100">{value} min</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── Slide content components ─────────────────────────────────────────────
+function PrepSlide({ version, onNext }) {
+  const meta = version?.metadata || {};
   const equipment = version?.equipment ?? [];
   const notesList = version?.notes ?? [];
   const notes = notesList.every(
@@ -130,44 +186,52 @@ function PrepSlide({ version, onNext }) {
     : notesList.map((n) =>
         typeof n === "string" ? { type: "tip", content: n } : n,
       );
-
-  const hasTimes = prep != null || cook != null || total != null;
+  const hasTimes =
+    meta.prep_time_minutes != null ||
+    meta.cook_time_minutes != null ||
+    meta.total_time_minutes != null;
 
   return (
-    <div className="space-y-8 max-w-xl mx-auto text-left">
+    <div className="space-y-8 max-w-6xl mx-auto text-left w-full">
       <h2 className="text-xl font-semibold text-white">Before you start</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-        {hasTimes && (
-          <div>
-            <h3 className="text-sm font-medium text-stone-300 mb-2">Cooking times</h3>
-            <ul className="space-y-1 text-stone-100">
-              {prep != null && <li>Prep: {prep} min</li>}
-              {cook != null && <li>Cook: {cook} min</li>}
-              {total != null && <li>Total: {total} min</li>}
-            </ul>
-          </div>
-        )}
-        {equipment.length > 0 && (
-          <div className="p-6 min-w-0">
-            <h3 className="text-sm font-medium text-stone-300 mb-2">Equipment</h3>
-            <ul className="flex flex-wrap gap-2">
-              {equipment.map((item, i) => (
-                <li
-                  key={i}
-                  className="rounded-full bg-stone-700 px-3 py-1 text-sm text-stone-100"
-                >
-                  {typeof item === "string" ? item : item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+      <div className="flex gap-6 items-start">
+        <div className="w-[220px] shrink-0">
+          {hasTimes && (
+            <>
+              <h3 className="text-sm font-medium text-stone-300 mb-2">
+                Cook Times
+              </h3>
+              <TimeBlock version={version} />
+            </>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          {equipment.length > 0 && (
+            <>
+              <h3 className="text-sm font-medium text-stone-300 mb-2">
+                Equipment
+              </h3>
+              <ul className="flex flex-wrap gap-2">
+                {equipment.map((item, i) => (
+                  <li
+                    key={i}
+                    className="rounded-full bg-stone-700 px-3 py-1 text-sm text-stone-100"
+                  >
+                    {typeof item === "string" ? item : item}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
       </div>
 
       {notes.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-stone-300 mb-2">Notes & tips</h3>
+          <h3 className="text-sm font-medium text-stone-300 mb-2">
+            Notes & tips
+          </h3>
           <ul className="space-y-2 text-stone-100">
             {notes.map((n, i) => (
               <li key={i} className="flex gap-2">
@@ -201,7 +265,7 @@ function PrepSlide({ version, onNext }) {
 function IngredientsSlide({ version, onNext }) {
   const ingredients = version?.ingredients ?? [];
   return (
-    <div className="space-y-6 max-w-xl mx-auto text-left">
+    <div className="space-y-6 max-w-6xl mx-auto text-left w-full">
       <h2 className="text-xl font-semibold text-white">Ingredients</h2>
       <ul className="space-y-2 text-stone-100">
         {ingredients.map((ing, i) => {
@@ -246,7 +310,7 @@ function StepSlideContent({
   const text = stepText(step);
 
   return (
-    <div className="space-y-6 max-w-xl mx-auto text-left px-2">
+    <div className="space-y-6 max-w-6xl mx-auto text-left px-2 w-full">
       <div className="text-sm text-stone-300">
         Step {stepNumber} of {totalSteps}
         {stepStartTime && (
@@ -332,14 +396,17 @@ export default function CookMode() {
   useEffect(() => {
     if (!isStepSlide || stepIndex < 0 || stepIndex >= steps.length) return;
     if (stepStartTimes[stepIndex]) return;
-    setStepStartTimes((prev) => ({ ...prev, [stepIndex]: new Date().toISOString() }));
+    setStepStartTimes((prev) => ({
+      ...prev,
+      [stepIndex]: new Date().toISOString(),
+    }));
   }, [slideIndex, isStepSlide, stepIndex, steps.length, stepStartTimes]);
 
   // Reset timer choice when moving to a new step
   useEffect(() => {
     if (isStepSlide) {
       setTimerChoice(null);
-      const d = currentStep ? stepDurationMinutes(currentStep) ?? 10 : 10;
+      const d = currentStep ? (stepDurationMinutes(currentStep) ?? 10) : 10;
       setDefaultTimerMinutes(d);
     }
   }, [slideIndex]);
@@ -380,10 +447,9 @@ export default function CookMode() {
     );
   }
 
-  const showTimerStrip =
-    isStepSlide && currentStep && timerChoice === "yes";
+  const showTimerStrip = isStepSlide && currentStep && timerChoice === "yes";
   const defaultStepMinutes = currentStep
-    ? stepDurationMinutes(currentStep) ?? 10
+    ? (stepDurationMinutes(currentStep) ?? 10)
     : 10;
 
   return (
@@ -394,18 +460,20 @@ export default function CookMode() {
           to={`/recipes/${slug}`}
           className="rounded-lg bg-stone-700 px-4 py-2 text-sm font-medium text-stone-100 hover:bg-stone-600 hover:text-white"
         >
-          Exit cooking
+          Stop cooking
         </Link>
       </div>
 
       {/* Slide area: scrollable for step slides, centered for others */}
       <div
         className={`flex-1 flex flex-col min-h-0 px-6 py-16 ${
-          isStepSlide ? "overflow-auto" : "items-center justify-center overflow-auto"
+          isStepSlide
+            ? "overflow-auto"
+            : "items-center justify-center overflow-auto"
         }`}
       >
         {!isStepSlide && (
-          <div className="w-full max-w-2xl flex flex-col items-center min-h-[320px]">
+          <div className="w-full max-w-6xl flex flex-col items-center min-h-[320px]">
             {slideIndex === 0 && (
               <PrepSlide version={version} onNext={goNext} />
             )}
@@ -430,7 +498,7 @@ export default function CookMode() {
       {/* Timer in separate container above nav (step slides only) */}
       {showTimerStrip && (
         <div className="shrink-0 px-6 pb-4">
-          <div className="max-w-xl mx-auto rounded-xl border-2 border-amber-200/80 bg-amber-50/10 p-4">
+          <div className="max-w-6xl mx-auto rounded-xl border-2 border-amber-200/80 bg-amber-50/10 p-4">
             <StepTimer
               key={`timer-${stepIndex}`}
               defaultMinutes={defaultTimerMinutes ?? defaultStepMinutes}
