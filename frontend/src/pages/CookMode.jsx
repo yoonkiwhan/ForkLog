@@ -20,7 +20,7 @@ function stepDurationMinutes(step) {
   return step.duration_minutes ?? null;
 }
 
-// ─── Timer (one per step) ─────────────────────────────────────────────────
+// ─── Timer ───────────────────────────────────────────────────────────────
 function StepTimer({ defaultMinutes, onTimerEnd }) {
   const [minutes, setMinutes] = useState(defaultMinutes);
   const [secondsRemaining, setSecondsRemaining] = useState(defaultMinutes * 60);
@@ -49,8 +49,6 @@ function StepTimer({ defaultMinutes, onTimerEnd }) {
     };
   }, [running, onTimerEnd]);
 
-  const start = () => setRunning(true);
-  const pause = () => setRunning(false);
   const setNewTimer = () => {
     setSecondsRemaining(minutes * 60);
     setEnded(false);
@@ -80,7 +78,7 @@ function StepTimer({ defaultMinutes, onTimerEnd }) {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={running ? pause : start}
+              onClick={() => setRunning(!running)}
               className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
             >
               {running ? "Pause" : "Start"}
@@ -137,7 +135,6 @@ function ClockIcon({ className }) {
     </svg>
   );
 }
-
 function XMarkIcon({ className }) {
   return (
     <svg
@@ -157,7 +154,6 @@ function XMarkIcon({ className }) {
     </svg>
   );
 }
-
 function ChevronLeftIcon({ className }) {
   return (
     <svg
@@ -177,7 +173,6 @@ function ChevronLeftIcon({ className }) {
     </svg>
   );
 }
-
 function ChevronRightIcon({ className }) {
   return (
     <svg
@@ -198,7 +193,7 @@ function ChevronRightIcon({ className }) {
   );
 }
 
-// ─── Time block (same design as RecipeDetail, dark styling) ─────────────────
+// ─── Time block ───────────────────────────────────────────────────────────
 function TimeBlock({ version }) {
   const meta = version?.metadata || {};
   const prep = meta.prep_time_minutes;
@@ -235,23 +230,19 @@ function TimeBlock({ version }) {
   );
 }
 
-// ─── Notes with scroll hint when content overflows ─────────────────────────
+// ─── Notes with scroll hint ───────────────────────────────────────────────
 function NotesWithScrollHint({ notes }) {
   const containerRef = useRef(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
-
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const check = () => {
-      setShowScrollHint(el.scrollHeight > el.clientHeight);
-    };
+    const check = () => setShowScrollHint(el.scrollHeight > el.clientHeight);
     check();
     const ro = new ResizeObserver(check);
     ro.observe(el);
     return () => ro.disconnect();
   }, [notes]);
-
   return (
     <div>
       <h3 className="text-sm font-medium text-stone-300 mb-2">Notes & tips</h3>
@@ -279,7 +270,7 @@ function NotesWithScrollHint({ notes }) {
   );
 }
 
-// ─── Slide content components ─────────────────────────────────────────────
+// ─── Prep slide ───────────────────────────────────────────────────────────
 function PrepSlide({ version }) {
   const meta = version?.metadata || {};
   const equipment = version?.equipment ?? [];
@@ -299,7 +290,6 @@ function PrepSlide({ version }) {
   return (
     <div className="space-y-8 max-w-6xl mx-auto text-left w-full">
       <h2 className="text-xl font-semibold text-white">Before you start</h2>
-
       <div className="flex gap-6 items-start">
         <div className="w-[220px] shrink-0">
           {hasTimes && (
@@ -331,33 +321,38 @@ function PrepSlide({ version }) {
           )}
         </div>
       </div>
-
       {notes.length > 0 && <NotesWithScrollHint notes={notes} />}
     </div>
   );
 }
 
+// ─── Ingredients slide (matches first slide style) ─────────────────────────
 function IngredientsSlide({ version, onNext }) {
   const ingredients = version?.ingredients ?? [];
   return (
-    <div className="space-y-6 max-w-6xl mx-auto text-left w-full">
+    <div className="space-y-8 max-w-6xl mx-auto text-left w-full">
       <h2 className="text-xl font-semibold text-white">Ingredients</h2>
-      <ul className="space-y-2 text-stone-100">
-        {ingredients.map((ing, i) => {
-          const line =
-            typeof ing === "string"
-              ? ing
-              : [ing.quantity ?? ing.amount, ing.unit, ing.name]
-                  .filter(Boolean)
-                  .join(" ");
-          return (
-            <li key={i} className="flex items-start gap-2">
-              <span className="text-stone-400 select-none">•</span>
-              <span>{line}</span>
-            </li>
-          );
-        })}
-      </ul>
+      <div>
+        <h3 className="text-sm font-medium text-stone-300 mb-2">
+          You&apos;ll need:
+        </h3>
+        <ul className="space-y-3 text-stone-100">
+          {ingredients.map((ing, i) => {
+            const line =
+              typeof ing === "string"
+                ? ing
+                : [ing.quantity ?? ing.amount, ing.unit, ing.name]
+                    .filter(Boolean)
+                    .join(" ");
+            return (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-stone-400 select-none">•</span>
+                <span>{line}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
       {onNext && (
         <div className="pt-4">
           <button
@@ -373,6 +368,7 @@ function IngredientsSlide({ version, onNext }) {
   );
 }
 
+// ─── Step slide ───────────────────────────────────────────────────────────
 function StepSlideContent({
   step,
   stepNumber,
@@ -383,7 +379,6 @@ function StepSlideContent({
   onNext,
 }) {
   const text = stepText(step);
-
   return (
     <div className="space-y-6 max-w-6xl mx-auto text-left px-2 w-full">
       <div className="text-sm text-stone-300">
@@ -394,11 +389,9 @@ function StepSlideContent({
           </span>
         )}
       </div>
-
       <p className="text-lg font-light text-stone-100 leading-relaxed">
         {text}
       </p>
-
       {timerChoice === null && (
         <div className="rounded-xl border border-stone-600 bg-stone-800/50 p-4">
           <p className="text-sm font-medium text-stone-200 mb-3">
@@ -422,8 +415,7 @@ function StepSlideContent({
           </div>
         </div>
       )}
-
-      {/* <div className="pt-4">
+      <div className="pt-4">
         <button
           type="button"
           onClick={onNext}
@@ -431,7 +423,7 @@ function StepSlideContent({
         >
           Next step
         </button>
-      </div> */}
+      </div>
     </div>
   );
 }
@@ -444,7 +436,6 @@ export default function CookMode() {
   const [version, setVersion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [slideIndex, setSlideIndex] = useState(0);
   const [stepStartTimes, setStepStartTimes] = useState({});
   const [timerChoice, setTimerChoice] = useState(null);
@@ -481,28 +472,28 @@ export default function CookMode() {
   useEffect(() => {
     if (isStepSlide) {
       setTimerChoice(null);
-      const d = currentStep ? (stepDurationMinutes(currentStep) ?? 10) : 10;
-      setDefaultTimerMinutes(d);
+      setDefaultTimerMinutes(
+        currentStep ? (stepDurationMinutes(currentStep) ?? 10) : 10,
+      );
     }
   }, [slideIndex]);
 
-  const goNext = useCallback(() => {
-    setSlideIndex((i) => Math.min(i + 1, totalSlides - 1));
-  }, [totalSlides]);
+  const goNext = useCallback(
+    () => setSlideIndex((i) => Math.min(i + 1, totalSlides - 1)),
+    [totalSlides],
+  );
+  const goPrev = useCallback(
+    () => setSlideIndex((i) => Math.max(0, i - 1)),
+    [],
+  );
 
-  const goPrev = useCallback(() => {
-    setSlideIndex((i) => Math.max(0, i - 1));
-  }, []);
-
-  if (loading) {
+  if (loading)
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900">
         <div className="animate-pulse text-stone-200">Loading cook mode…</div>
       </div>
     );
-  }
-
-  if (error || !recipe) {
+  if (error || !recipe)
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3">
@@ -510,9 +501,7 @@ export default function CookMode() {
         </div>
       </div>
     );
-  }
-
-  if (!version) {
+  if (!version)
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3">
@@ -520,7 +509,6 @@ export default function CookMode() {
         </div>
       </div>
     );
-  }
 
   const showTimerStrip = isStepSlide && currentStep && timerChoice === "yes";
   const defaultStepMinutes = currentStep
@@ -529,15 +517,13 @@ export default function CookMode() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-stone-900">
-      {/* Exit */}
       <div className="absolute top-4 right-4 z-10">
         <button
           type="button"
           onClick={() => setShowExitConfirm(true)}
           className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
         >
-          <XMarkIcon className="h-4 w-4 shrink-0" />
-          Stop cooking
+          <XMarkIcon className="h-4 w-4 shrink-0" /> Stop cooking
         </button>
       </div>
 
@@ -579,16 +565,11 @@ export default function CookMode() {
         </div>
       )}
 
-      {/* Slide area */}
       <div
-        className={`flex-1 flex flex-col min-h-0 px-6 pt-16 pb-4 ${
-          isStepSlide
-            ? "overflow-auto"
-            : "items-center justify-center overflow-auto"
-        }`}
+        className={`flex-1 flex flex-col min-h-0 min-w-0 px-6 pt-16 pb-4 overflow-auto ${isStepSlide ? "" : "flex items-start justify-start"}`}
       >
         {!isStepSlide && (
-          <div className="w-full max-w-6xl flex flex-col items-center min-h-[320px]">
+          <div className="w-full max-w-6xl mx-auto flex flex-col items-start min-h-0">
             {slideIndex === 0 && <PrepSlide version={version} />}
             {slideIndex === 1 && (
               <IngredientsSlide version={version} onNext={goNext} />
@@ -620,7 +601,6 @@ export default function CookMode() {
         </div>
       )}
 
-      {/* Progress & nav */}
       <div className="shrink-0 flex items-center justify-center gap-4 py-3">
         <button
           type="button"
@@ -628,8 +608,7 @@ export default function CookMode() {
           disabled={slideIndex === 0}
           className="inline-flex items-center gap-2 rounded-lg border border-stone-500 px-4 py-2 text-sm font-medium text-stone-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-700"
         >
-          <ChevronLeftIcon className="h-4 w-4 shrink-0" />
-          Previous
+          <ChevronLeftIcon className="h-4 w-4 shrink-0" /> Previous
         </button>
         <span className="text-sm text-stone-300">
           {slideIndex + 1} / {totalSlides}
@@ -640,8 +619,7 @@ export default function CookMode() {
           disabled={slideIndex >= totalSlides - 1}
           className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-600 disabled:bg-stone-700 disabled:hover:bg-stone-700 disabled:text-stone-400"
         >
-          Next
-          <ChevronRightIcon className="h-4 w-4 shrink-0" />
+          Next <ChevronRightIcon className="h-4 w-4 shrink-0" />
         </button>
       </div>
     </div>
