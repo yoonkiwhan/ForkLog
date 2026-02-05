@@ -9,16 +9,25 @@ function IngredientList({ ingredients }) {
       {ingredients.map((ing, i) => {
         if (typeof ing === "string") return <li key={i} className="text-stone-600">{ing}</li>;
         const qty = ing.quantity ?? ing.amount;
-        const parts = [qty, ing.unit, ing.name].filter(Boolean);
-        let line = parts.join(" ");
-        if (ing.preparation) line += `, ${ing.preparation}`;
-        if (ing.notes) line += ` (${ing.notes})`;
-        if (ing.note) line += ` (${ing.note})`;
+        const unit = ing.unit;
+        const name = ing.name;
+        const hasMeasurement = qty !== undefined && qty !== null && qty !== "" || unit;
         const optional = ing.optional ? " (optional)" : "";
         return (
           <li key={ing.id ?? i} className="flex items-start gap-2 text-stone-600">
             <span className="text-stone-400 select-none">•</span>
-            <span>{line}{optional}</span>
+            <span>
+              {hasMeasurement && (
+                <span className="font-bold text-stone-800">
+                  {[qty, unit].filter(Boolean).join(" ")}
+                </span>
+              )}
+              {hasMeasurement && name && " "}
+              {name}
+              {ing.preparation && `, ${ing.preparation}`}
+              {(ing.notes || ing.note) && ` (${ing.notes || ing.note})`}
+              {optional}
+            </span>
           </li>
         );
       })}
@@ -125,9 +134,9 @@ function NotesList({ notes }) {
   );
 }
 
-function NutritionBlock({ nutrition }) {
+function NutritionLabel({ nutrition }) {
   if (!nutrition || typeof nutrition !== "object") return null;
-  const entries = [
+  const rows = [
     ["Calories", nutrition.calories, "kcal"],
     ["Protein", nutrition.protein_g, "g"],
     ["Carbs", nutrition.carbs_g, "g"],
@@ -135,16 +144,26 @@ function NutritionBlock({ nutrition }) {
     ["Fiber", nutrition.fiber_g, "g"],
     ["Sodium", nutrition.sodium_mg, "mg"],
   ].filter(([, v]) => v != null && v !== "");
-  if (!entries.length) return null;
+  if (!rows.length) return null;
   return (
-    <section className="mb-6">
-      <h3 className="text-sm font-medium text-stone-500 mb-2">Nutrition (per serving)</h3>
-      <div className="flex flex-wrap gap-4 text-sm text-stone-600">
-        {entries.map(([label, value, unit]) => (
-          <span key={label}>{label}: {value}{unit}</span>
-        ))}
+    <div className="rounded border-2 border-stone-800 p-3 w-full max-w-[220px] bg-white shadow-sm">
+      <div className="border-b-2 border-stone-800 pb-1 mb-2">
+        <p className="text-xl font-bold tracking-tight leading-none">Nutrition Facts</p>
       </div>
-    </section>
+      <p className="text-xs font-semibold text-stone-600 mb-2">Per serving</p>
+      <table className="w-full text-sm">
+        <tbody>
+          {rows.map(([label, value, unit]) => (
+            <tr key={label} className="border-b border-stone-200 last:border-0">
+              <td className="py-0.5 pr-2 text-stone-600">{label}</td>
+              <td className="py-0.5 text-right font-bold text-stone-800 tabular-nums">
+                {value}{unit}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -275,7 +294,6 @@ export default function RecipeDetail() {
               </section>
               <EquipmentList equipment={versionDetail.equipment} />
               <NotesList notes={versionDetail.notes} />
-              <NutritionBlock nutrition={versionDetail.nutrition} />
               <TagsList tags={versionDetail.tags} />
             </>
           ) : (
@@ -283,17 +301,24 @@ export default function RecipeDetail() {
           )}
         </div>
 
-        <div className="space-y-4">
-          <Link
-            to={`/recipes/${slug}/cook`}
-            className="block w-full rounded-xl bg-amber-500 text-white font-medium text-center py-3 px-4 hover:bg-amber-600 transition-colors"
-          >
-            Start cooking (with AI)
-          </Link>
-          <p className="text-xs text-stone-400">
-            Cook mode uses the latest version and Claude to guide you
-            step-by-step.
-          </p>
+        <div className="space-y-6">
+          {versionDetail?.nutrition && Object.keys(versionDetail.nutrition).length > 0 && (
+            <div className="flex justify-center">
+              <NutritionLabel nutrition={versionDetail.nutrition} />
+            </div>
+          )}
+          <div className="space-y-4">
+            <Link
+              to={`/recipes/${slug}/cook`}
+              className="block w-full rounded-xl bg-amber-500 text-white font-medium text-center py-3 px-4 hover:bg-amber-600 transition-colors"
+            >
+              Start cooking (with AI)
+            </Link>
+            <p className="text-xs text-stone-400">
+              Cook mode uses the latest version and Claude to guide you
+              step-by-step.
+            </p>
+          </div>
         </div>
       </div>
     </div>
