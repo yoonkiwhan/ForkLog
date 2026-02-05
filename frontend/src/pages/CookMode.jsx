@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -28,7 +28,6 @@ function StepTimer({ defaultMinutes, onTimerEnd }) {
   const [ended, setEnded] = useState(false);
   const intervalRef = useRef(null);
 
-  const totalSeconds = minutes * 60;
   const displayM = Math.floor(secondsRemaining / 60);
   const displayS = secondsRemaining % 60;
 
@@ -118,7 +117,7 @@ function StepTimer({ defaultMinutes, onTimerEnd }) {
   );
 }
 
-// ─── Clock icon (matches RecipeDetail) ────────────────────────────────────
+// ─── Icons ────────────────────────────────────────────────────────────────
 function ClockIcon({ className }) {
   return (
     <svg
@@ -139,7 +138,67 @@ function ClockIcon({ className }) {
   );
 }
 
-// ─── Time block (same design as RecipeDetail) ─────────────────────────────
+function XMarkIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 18L18 6M6 6l12 12"
+      />
+    </svg>
+  );
+}
+
+function ChevronLeftIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.75 19.5L8.25 12l7.5-7.5"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8.25 4.5l7.5 7.5-7.5 7.5"
+      />
+    </svg>
+  );
+}
+
+// ─── Time block (same design as RecipeDetail, dark styling) ─────────────────
 function TimeBlock({ version }) {
   const meta = version?.metadata || {};
   const prep = meta.prep_time_minutes;
@@ -165,7 +224,9 @@ function TimeBlock({ version }) {
                 </td>
               )}
               <td className="py-0.5 text-stone-300">{label}</td>
-              <td className="py-0.5 text-right tabular-nums text-stone-100">{value} min</td>
+              <td className="py-0.5 text-right tabular-nums text-stone-100">
+                {value} min
+              </td>
             </tr>
           ))}
         </tbody>
@@ -174,8 +235,52 @@ function TimeBlock({ version }) {
   );
 }
 
+// ─── Notes with scroll hint when content overflows ─────────────────────────
+function NotesWithScrollHint({ notes }) {
+  const containerRef = useRef(null);
+  const [showScrollHint, setShowScrollHint] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const check = () => {
+      setShowScrollHint(el.scrollHeight > el.clientHeight);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [notes]);
+
+  return (
+    <div>
+      <h3 className="text-sm font-medium text-stone-300 mb-2">Notes & tips</h3>
+      <div
+        ref={containerRef}
+        className="max-h-40 overflow-y-auto space-y-2 text-stone-100 pr-2"
+      >
+        <ul className="space-y-2">
+          {notes.map((n, i) => (
+            <li key={i} className="flex gap-2">
+              {n.type && (
+                <span className="capitalize text-stone-300 font-medium shrink-0">
+                  {n.type}:
+                </span>
+              )}
+              <span>{n.content ?? n}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {showScrollHint && (
+        <p className="mt-2 text-xs text-stone-400 italic">Scroll for more</p>
+      )}
+    </div>
+  );
+}
+
 // ─── Slide content components ─────────────────────────────────────────────
-function PrepSlide({ version, onNext }) {
+function PrepSlide({ version }) {
   const meta = version?.metadata || {};
   const equipment = version?.equipment ?? [];
   const notesList = version?.notes ?? [];
@@ -227,37 +332,7 @@ function PrepSlide({ version, onNext }) {
         </div>
       </div>
 
-      {notes.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium text-stone-300 mb-2">
-            Notes & tips
-          </h3>
-          <ul className="space-y-2 text-stone-100">
-            {notes.map((n, i) => (
-              <li key={i} className="flex gap-2">
-                {n.type && (
-                  <span className="capitalize text-stone-300 font-medium shrink-0">
-                    {n.type}:
-                  </span>
-                )}
-                <span>{n.content ?? n}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {onNext && (
-        <div className="pt-4">
-          <button
-            type="button"
-            onClick={onNext}
-            className="rounded-xl bg-amber-500 px-6 py-3 text-base font-medium text-white hover:bg-amber-600"
-          >
-            Continue
-          </button>
-        </div>
-      )}
+      {notes.length > 0 && <NotesWithScrollHint notes={notes} />}
     </div>
   );
 }
@@ -348,7 +423,7 @@ function StepSlideContent({
         </div>
       )}
 
-      <div className="pt-4">
+      {/* <div className="pt-4">
         <button
           type="button"
           onClick={onNext}
@@ -356,7 +431,7 @@ function StepSlideContent({
         >
           Next step
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }
@@ -364,6 +439,7 @@ function StepSlideContent({
 // ─── Main ─────────────────────────────────────────────────────────────────
 export default function CookMode() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [recipe, setRecipe] = useState(null);
   const [version, setVersion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -373,9 +449,10 @@ export default function CookMode() {
   const [stepStartTimes, setStepStartTimes] = useState({});
   const [timerChoice, setTimerChoice] = useState(null);
   const [defaultTimerMinutes, setDefaultTimerMinutes] = useState(10);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const steps = version ? sortSteps(version.steps) : [];
-  const totalSlides = 2 + steps.length; // prep + ingredients + steps
+  const totalSlides = 2 + steps.length;
   const isStepSlide = slideIndex >= 2;
   const stepIndex = slideIndex - 2;
   const currentStep = steps[stepIndex];
@@ -392,7 +469,6 @@ export default function CookMode() {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  // Record step start time when entering a step slide
   useEffect(() => {
     if (!isStepSlide || stepIndex < 0 || stepIndex >= steps.length) return;
     if (stepStartTimes[stepIndex]) return;
@@ -402,7 +478,6 @@ export default function CookMode() {
     }));
   }, [slideIndex, isStepSlide, stepIndex, steps.length, stepStartTimes]);
 
-  // Reset timer choice when moving to a new step
   useEffect(() => {
     if (isStepSlide) {
       setTimerChoice(null);
@@ -456,17 +531,57 @@ export default function CookMode() {
     <div className="fixed inset-0 z-50 flex flex-col bg-stone-900">
       {/* Exit */}
       <div className="absolute top-4 right-4 z-10">
-        <Link
-          to={`/recipes/${slug}`}
-          className="rounded-lg bg-stone-700 px-4 py-2 text-sm font-medium text-stone-100 hover:bg-stone-600 hover:text-white"
+        <button
+          type="button"
+          onClick={() => setShowExitConfirm(true)}
+          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
         >
+          <XMarkIcon className="h-4 w-4 shrink-0" />
           Stop cooking
-        </Link>
+        </button>
       </div>
 
-      {/* Slide area: scrollable for step slides, centered for others */}
+      {showExitConfirm && (
+        <div
+          className="fixed inset-0 z-20 flex items-center justify-center bg-black/60"
+          onClick={() => setShowExitConfirm(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="exit-dialog-title"
+        >
+          <div
+            className="rounded-xl bg-stone-800 border border-stone-600 p-6 shadow-xl max-w-sm mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              id="exit-dialog-title"
+              className="text-lg font-semibold text-white mb-3"
+            >
+              Are you sure you wish to stop cooking?
+            </h2>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowExitConfirm(false)}
+                className="rounded-lg border border-stone-500 px-4 py-2 text-sm font-medium text-stone-200 hover:bg-stone-700"
+              >
+                Keep cooking
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/recipes/${slug}`)}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
+              >
+                Yes, stop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Slide area */}
       <div
-        className={`flex-1 flex flex-col min-h-0 px-6 py-16 ${
+        className={`flex-1 flex flex-col min-h-0 px-6 pt-16 pb-4 ${
           isStepSlide
             ? "overflow-auto"
             : "items-center justify-center overflow-auto"
@@ -474,9 +589,7 @@ export default function CookMode() {
       >
         {!isStepSlide && (
           <div className="w-full max-w-6xl flex flex-col items-center min-h-[320px]">
-            {slideIndex === 0 && (
-              <PrepSlide version={version} onNext={goNext} />
-            )}
+            {slideIndex === 0 && <PrepSlide version={version} />}
             {slideIndex === 1 && (
               <IngredientsSlide version={version} onNext={goNext} />
             )}
@@ -495,7 +608,6 @@ export default function CookMode() {
         )}
       </div>
 
-      {/* Timer in separate container above nav (step slides only) */}
       {showTimerStrip && (
         <div className="shrink-0 px-6 pb-4">
           <div className="max-w-6xl mx-auto rounded-xl border-2 border-amber-200/80 bg-amber-50/10 p-4">
@@ -509,13 +621,14 @@ export default function CookMode() {
       )}
 
       {/* Progress & nav */}
-      <div className="shrink-0 flex items-center justify-center gap-4 py-5">
+      <div className="shrink-0 flex items-center justify-center gap-4 py-3">
         <button
           type="button"
           onClick={goPrev}
           disabled={slideIndex === 0}
-          className="rounded-lg border border-stone-500 px-4 py-2 text-sm font-medium text-stone-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-stone-500 px-4 py-2 text-sm font-medium text-stone-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-700"
         >
+          <ChevronLeftIcon className="h-4 w-4 shrink-0" />
           Previous
         </button>
         <span className="text-sm text-stone-300">
@@ -525,9 +638,10 @@ export default function CookMode() {
           type="button"
           onClick={goNext}
           disabled={slideIndex >= totalSlides - 1}
-          className="rounded-lg border border-stone-500 px-4 py-2 text-sm font-medium text-stone-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-700"
+          className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-600 disabled:bg-stone-700 disabled:hover:bg-stone-700 disabled:text-stone-400"
         >
           Next
+          <ChevronRightIcon className="h-4 w-4 shrink-0" />
         </button>
       </div>
     </div>
