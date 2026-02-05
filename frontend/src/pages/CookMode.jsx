@@ -21,7 +21,7 @@ function stepDurationMinutes(step) {
 }
 
 // ─── Timer ───────────────────────────────────────────────────────────────
-function StepTimer({ defaultMinutes, onTimerEnd }) {
+function StepTimer({ defaultMinutes, onTimerEnd, children }) {
   const [minutes, setMinutes] = useState(defaultMinutes);
   const [secondsRemaining, setSecondsRemaining] = useState(defaultMinutes * 60);
   const [running, setRunning] = useState(false);
@@ -98,17 +98,20 @@ function StepTimer({ defaultMinutes, onTimerEnd }) {
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2 text-sm">
-          <label className="text-stone-600">Duration (min):</label>
-          <input
-            type="number"
-            min={0}
-            max={999}
-            value={minutes}
-            onChange={(e) => applyMinutes(parseInt(e.target.value, 10) || 0)}
-            className="w-20 rounded border border-stone-200 px-2 py-1 text-stone-800"
-            disabled={running}
-          />
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2 text-sm">
+            <label className="text-stone-600">Duration (min):</label>
+            <input
+              type="number"
+              min={0}
+              max={999}
+              value={minutes}
+              onChange={(e) => applyMinutes(parseInt(e.target.value, 10) || 0)}
+              className="w-20 rounded border border-stone-200 px-2 py-1 text-stone-800"
+              disabled={running}
+            />
+          </div>
+          {children}
         </div>
       )}
     </div>
@@ -431,9 +434,8 @@ export default function CookMode() {
   const [error, setError] = useState(null);
   const [slideIndex, setSlideIndex] = useState(0);
   const [stepStartTimes, setStepStartTimes] = useState({});
-  const [timerChoice, setTimerChoice] = useState(null);
-  const [defaultTimerMinutes, setDefaultTimerMinutes] = useState(10);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [timerHidden, setTimerHidden] = useState(false);
 
   const steps = version ? sortSteps(version.steps) : [];
   const totalSlides = 2 + steps.length;
@@ -463,12 +465,7 @@ export default function CookMode() {
   }, [slideIndex, isStepSlide, stepIndex, steps.length, stepStartTimes]);
 
   useEffect(() => {
-    if (isStepSlide) {
-      setTimerChoice(null);
-      setDefaultTimerMinutes(
-        currentStep ? (stepDurationMinutes(currentStep) ?? 10) : 10,
-      );
-    }
+    setTimerHidden(false);
   }, [slideIndex]);
 
   const goNext = useCallback(
@@ -503,7 +500,6 @@ export default function CookMode() {
       </div>
     );
 
-  const showTimerStrip = isStepSlide && currentStep && timerChoice === "yes";
   const defaultStepMinutes = currentStep
     ? (stepDurationMinutes(currentStep) ?? 10)
     : 10;
@@ -595,41 +591,38 @@ export default function CookMode() {
         )}
       </div>
 
-      {/* Timer strip: same position/size for prompt and timer (step slides only) */}
-      {isStepSlide && currentStep && (timerChoice === null || timerChoice === "yes") && (
+      {/* Timer strip (step slides only); Hide minimizes to bottom-right */}
+      {isStepSlide && currentStep && !timerHidden && (
         <div className="shrink-0 px-6 pb-4">
           <div className="max-w-6xl mx-auto rounded-xl border-2 border-amber-200/80 bg-amber-50/10 p-4">
-            {timerChoice === null ? (
-              <div>
-                <p className="text-sm font-medium text-stone-700 mb-3">
-                  Would you like a timer for this step?
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setTimerChoice("yes")}
-                    className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTimerChoice("no")}
-                    className="rounded-lg border border-stone-400 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100"
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <StepTimer
-                key={`timer-${stepIndex}`}
-                defaultMinutes={defaultTimerMinutes ?? defaultStepMinutes}
-                onTimerEnd={() => {}}
-              />
-            )}
+            <StepTimer
+              key={`timer-${stepIndex}`}
+              defaultMinutes={defaultStepMinutes}
+              onTimerEnd={() => {}}
+            >
+              <button
+                type="button"
+                onClick={() => setTimerHidden(true)}
+                className="rounded-lg border border-stone-400 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100"
+              >
+                Hide
+              </button>
+            </StepTimer>
           </div>
         </div>
+      )}
+
+      {/* Minimized timer: Show Timer button at bottom-right of overlay */}
+      {isStepSlide && currentStep && timerHidden && (
+        <button
+          type="button"
+          onClick={() => setTimerHidden(false)}
+          className="absolute z-20 inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-amber-600"
+          style={{ right: 24, bottom: 80 }}
+        >
+          <ClockIcon className="h-4 w-4 shrink-0" />
+          Show Timer
+        </button>
       )}
 
       <div className="shrink-0 flex items-center justify-center gap-4 py-3">
