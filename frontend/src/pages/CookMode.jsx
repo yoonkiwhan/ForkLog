@@ -544,14 +544,25 @@ export default function CookMode() {
   const [error, setError] = useState(null);
   const [slideIndex, setSlideIndex] = useState(0);
   const [stepStartTimes, setStepStartTimes] = useState({});
+  const [stepDurationsSeconds, setStepDurationsSeconds] = useState([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [timerHidden, setTimerHidden] = useState(false);
+  const [showFinishModal, setShowFinishModal] = useState(false);
+  const [finishForm, setFinishForm] = useState({
+    session_notes: "",
+    rating: "",
+    modifications: "",
+  });
+  const [finishSessionData, setFinishSessionData] = useState(null);
+  const [finishSaveError, setFinishSaveError] = useState(null);
+  const [finishSaving, setFinishSaving] = useState(false);
 
   const steps = version ? sortSteps(version.steps) : [];
   const totalSlides = 2 + steps.length;
   const isStepSlide = slideIndex >= 2;
   const stepIndex = slideIndex - 2;
   const currentStep = steps[stepIndex];
+  const isLastStep = isStepSlide && stepIndex === steps.length - 1;
 
   useEffect(() => {
     if (!slug) return;
@@ -586,6 +597,50 @@ export default function CookMode() {
     () => setSlideIndex((i) => Math.max(0, i - 1)),
     [],
   );
+
+  const recordCurrentStepDuration = useCallback(() => {
+    if (!isStepSlide || stepIndex < 0 || stepIndex >= steps.length) return;
+    const start = stepStartTimes[stepIndex];
+    if (!start) return;
+    const seconds = Math.round((Date.now() - new Date(start).getTime()) / 1000);
+    setStepDurationsSeconds((prev) => {
+      const next = [...prev];
+      next[stepIndex] = seconds;
+      return next;
+    });
+  }, [isStepSlide, stepIndex, steps.length, stepStartTimes]);
+
+  const handleNextClick = useCallback(() => {
+    if (isLastStep) {
+      const started_at = stepStartTimes[0]
+        ? new Date(stepStartTimes[0]).toISOString()
+        : new Date().toISOString();
+      const ended_at = new Date().toISOString();
+      const lastStepSec = stepStartTimes[stepIndex]
+        ? Math.round((Date.now() - new Date(stepStartTimes[stepIndex]).getTime()) / 1000)
+        : 0;
+      const step_durations_seconds = [...stepDurationsSeconds];
+      if (step_durations_seconds.length <= stepIndex) {
+        step_durations_seconds.length = stepIndex + 1;
+      }
+      step_durations_seconds[stepIndex] = lastStepSec;
+      setFinishSessionData({ started_at, ended_at, step_durations_seconds });
+      setShowFinishModal(true);
+      setFinishSaveError(null);
+      return;
+    }
+    if (isStepSlide && stepIndex >= 0) {
+      recordCurrentStepDuration();
+    }
+    goNext();
+  }, [
+    isLastStep,
+    stepIndex,
+    stepStartTimes,
+    stepDurationsSeconds,
+    recordCurrentStepDuration,
+    goNext,
+  ]);
 
   if (loading)
     return (
@@ -628,7 +683,9 @@ export default function CookMode() {
       ? "Check Ingredients"
       : slideIndex === 1
         ? "Start Cooking"
-        : "Next";
+        : isLastStep
+          ? "Finish cooking"
+          : "Next";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-stone-900">
@@ -674,6 +731,138 @@ export default function CookMode() {
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
               >
                 Yes, stop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFinishModal && finishSessionData && (
+        <div
+          className="fixed inset-0 z-20 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setShowFinishModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="finish-dialog-title"
+        >
+          <div
+            className="rounded-xl bg-stone-800 border border-stone-600 p-6 shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              id="finish-dialog-title"
+              className="text-lg font-semibold text-white mb-4"
+            >
+              Save cooking session
+            </h2>
+            <div className="space-y-4 mb-6">
+              <div>
+                <span className="text-sm font-medium text-stone-300 block mb-1">
+                  Time per step
+                </span>
+                <div className="text-sm text-stone-400 space-y-0.5">
+                  {finishSessionData.step_durations_seconds.map((sec, i) => (
+                    <div key={i}>
+                      Step {i + 1}: {Math.floor(sec / 60)}m {sec % 60}s
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-stone-300 mb-1">
+                  Session notes
+                </label>
+                <textarea
+                  value={finishForm.session_notes}
+                  onChange={(e) =>
+                    setFinishForm((f) => ({ ...f, session_notes: e.target.value }))
+                  }
+                  rows={2}
+                  className="w-full rounded-lg border border-stone-600 bg-stone-900 px-3 py-2 text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
+                  placeholder="How did it go?"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-stone-300 mb-1">
+                  Rating (1–5)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  step={0.5}
+                  value={finishForm.rating}
+                  onChange={(e) =>
+                    setFinishForm((f) => ({ ...f, rating: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-stone-600 bg-stone-900 px-3 py-2 text-stone-200 focus:border-amber-500 focus:outline-none"
+                  placeholder="Optional"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-stone-300 mb-1">
+                  Modifications
+                </label>
+                <textarea
+                  value={finishForm.modifications}
+                  onChange={(e) =>
+                    setFinishForm((f) => ({ ...f, modifications: e.target.value }))
+                  }
+                  rows={2}
+                  className="w-full rounded-lg border border-stone-600 bg-stone-900 px-3 py-2 text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
+                  placeholder="Any changes you made?"
+                />
+              </div>
+            </div>
+            {finishSaveError && (
+              <p className="text-red-400 text-sm mb-3">{finishSaveError}</p>
+            )}
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowFinishModal(false)}
+                className="rounded-lg border border-stone-500 px-4 py-2 text-sm font-medium text-stone-200 hover:bg-stone-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={finishSaving}
+                onClick={async () => {
+                  setFinishSaving(true);
+                  setFinishSaveError(null);
+                  try {
+                    await api.sessions.create(slug, {
+                      recipe_version: version.id,
+                      started_at: finishSessionData.started_at,
+                      ended_at: finishSessionData.ended_at,
+                      current_step_index: steps.length,
+                      step_durations_seconds: finishSessionData.step_durations_seconds,
+                      session_notes: finishForm.session_notes,
+                      rating:
+                        finishForm.rating === ""
+                          ? null
+                          : parseFloat(finishForm.rating),
+                      modifications: finishForm.modifications,
+                      photos: [],
+                    });
+                    setShowFinishModal(false);
+                    setFinishSessionData(null);
+                    setFinishForm({
+                      session_notes: "",
+                      rating: "",
+                      modifications: "",
+                    });
+                    navigate(`/recipes/${slug}`);
+                  } catch (err) {
+                    setFinishSaveError(err.message || "Failed to save session");
+                  } finally {
+                    setFinishSaving(false);
+                  }
+                }}
+                className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {finishSaving ? "Saving…" : "Save meal"}
               </button>
             </div>
           </div>
@@ -753,8 +942,8 @@ export default function CookMode() {
         </span>
         <button
           type="button"
-          onClick={goNext}
-          disabled={slideIndex >= totalSlides - 1}
+          onClick={handleNextClick}
+          disabled={slideIndex > totalSlides - 1}
           className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-600 disabled:bg-stone-700 disabled:hover:bg-stone-700 disabled:text-stone-400"
         >
           {nextButtonLabel} <ChevronRightIcon className="h-4 w-4 shrink-0" />

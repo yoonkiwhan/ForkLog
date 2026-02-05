@@ -120,7 +120,7 @@ class CookingSession(models.Model):
     log_entries = models.JSONField(default=list)
     session_notes = models.TextField(blank=True)
     # Actual time spent per step (seconds), by step index. e.g. [120, 90, 300] = 2min, 1.5min, 5min for steps 0,1,2.
-    step_durations_seconds = models.JSONField(default=list, blank=True)
+    step_durations_seconds = models.JSONField(default=list, blank=True, null=True)
     # schema cooking_log fields
     rating = models.FloatField(null=True, blank=True)
     modifications = models.TextField(blank=True)

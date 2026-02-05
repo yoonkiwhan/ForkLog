@@ -160,8 +160,8 @@ class CookingSessionListCreate(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return CookingSession.objects.filter(
+            owner=self.request.user,
             recipe_version__recipe__slug=self.kwargs['slug'],
-            recipe_version__recipe__owner=self.request.user,
         ).select_related('recipe_version').order_by('-started_at')
 
     def get_serializer_class(self):
@@ -178,15 +178,28 @@ class CookingSessionListCreate(generics.ListCreateAPIView):
                 {'error': 'Recipe version not found for this recipe.'},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        from django.utils.dateparse import parse_datetime
+
+        step_durations = request.data.get('step_durations_seconds')
+        if not isinstance(step_durations, list):
+            step_durations = []
         session = CookingSession.objects.create(
+            owner=request.user,
             recipe_version=version,
+            ended_at=request.data.get('ended_at'),
             current_step_index=request.data.get('current_step_index', 0),
-            log_entries=request.data.get('log_entries', []),
-            session_notes=request.data.get('session_notes', ''),
+            log_entries=request.data.get('log_entries') or [],
+            session_notes=request.data.get('session_notes') or '',
+            step_durations_seconds=step_durations,
             rating=request.data.get('rating'),
-            modifications=request.data.get('modifications', ''),
-            photos=request.data.get('photos', []),
+            modifications=request.data.get('modifications') or '',
+            photos=request.data.get('photos') or [],
         )
+        if request.data.get('started_at'):
+            parsed = parse_datetime(request.data['started_at'])
+            if parsed:
+                session.started_at = parsed
+                session.save(update_fields=['started_at'])
         return Response(
             CookingSessionSerializer(session).data,
             status=status.HTTP_201_CREATED,
@@ -199,8 +212,8 @@ class CookingSessionDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return CookingSession.objects.filter(
+            owner=self.request.user,
             recipe_version__recipe__slug=self.kwargs['slug'],
-            recipe_version__recipe__owner=self.request.user,
         ).select_related('recipe_version')
 
 

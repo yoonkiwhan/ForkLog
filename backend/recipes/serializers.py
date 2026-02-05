@@ -163,7 +163,8 @@ class CookingSessionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'recipe_version', 'recipe_version_detail',
             'started_at', 'ended_at', 'current_step_index',
-            'log_entries', 'session_notes', 'rating', 'modifications', 'photos',
+            'log_entries', 'session_notes', 'step_durations_seconds',
+            'rating', 'modifications', 'photos',
         ]
         read_only_fields = ['started_at']
 
@@ -172,6 +173,7 @@ class CookingSessionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CookingSession
         fields = [
-            'recipe_version', 'started_at', 'current_step_index',
-            'log_entries', 'session_notes', 'rating', 'modifications', 'photos',
+            'recipe_version', 'started_at', 'ended_at', 'current_step_index',
+            'log_entries', 'session_notes', 'step_durations_seconds',
+            'rating', 'modifications', 'photos',
         ]
