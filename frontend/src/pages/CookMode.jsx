@@ -402,9 +402,6 @@ function StepSlideContent({
   stepNumber,
   totalSteps,
   stepStartTime,
-  timerChoice,
-  setTimerChoice,
-  onNext,
 }) {
   const text = stepText(step);
   return (
@@ -420,38 +417,6 @@ function StepSlideContent({
       <p className="text-lg font-light text-stone-100 leading-relaxed">
         {text}
       </p>
-      {timerChoice === null && (
-        <div className="rounded-xl border border-stone-600 bg-stone-800/50 p-4">
-          <p className="text-sm font-medium text-stone-200 mb-3">
-            Would you like a timer for this step?
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setTimerChoice("yes")}
-              className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimerChoice("no")}
-              className="rounded-lg border border-stone-400 px-4 py-2 text-sm font-medium text-stone-200 hover:bg-stone-700"
-            >
-              No
-            </button>
-          </div>
-        </div>
-      )}
-      <div className="pt-4">
-        <button
-          type="button"
-          onClick={onNext}
-          className="rounded-xl bg-amber-500 px-6 py-3 text-base font-medium text-white hover:bg-amber-600"
-        >
-          Next step
-        </button>
-      </div>
     </div>
   );
 }
@@ -626,21 +591,43 @@ export default function CookMode() {
             stepNumber={stepIndex + 1}
             totalSteps={steps.length}
             stepStartTime={stepStartTimes[stepIndex]}
-            timerChoice={timerChoice}
-            setTimerChoice={setTimerChoice}
-            onNext={goNext}
           />
         )}
       </div>
 
-      {showTimerStrip && (
+      {/* Timer strip: same position/size for prompt and timer (step slides only) */}
+      {isStepSlide && currentStep && (timerChoice === null || timerChoice === "yes") && (
         <div className="shrink-0 px-6 pb-4">
           <div className="max-w-6xl mx-auto rounded-xl border-2 border-amber-200/80 bg-amber-50/10 p-4">
-            <StepTimer
-              key={`timer-${stepIndex}`}
-              defaultMinutes={defaultTimerMinutes ?? defaultStepMinutes}
-              onTimerEnd={() => {}}
-            />
+            {timerChoice === null ? (
+              <div>
+                <p className="text-sm font-medium text-stone-700 mb-3">
+                  Would you like a timer for this step?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTimerChoice("yes")}
+                    className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTimerChoice("no")}
+                    className="rounded-lg border border-stone-400 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100"
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <StepTimer
+                key={`timer-${stepIndex}`}
+                defaultMinutes={defaultTimerMinutes ?? defaultStepMinutes}
+                onTimerEnd={() => {}}
+              />
+            )}
           </div>
         </div>
       )}
