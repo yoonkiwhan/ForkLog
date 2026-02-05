@@ -63,14 +63,13 @@ function MetadataBlock({ versionDetail }) {
   const meta = versionDetail?.metadata || {};
   const title = versionDetail?.title || meta?.title;
   const description = meta?.description;
-  const servings = meta?.servings;
   const prep = meta?.prep_time_minutes;
   const cook = meta?.cook_time_minutes;
   const total = meta?.total_time_minutes;
   const difficulty = meta?.difficulty;
   const course = meta?.course;
   const cuisine = meta?.cuisine;
-  const hasAny = title || description || servings != null || prep != null || cook != null || total != null || difficulty || course || cuisine;
+  const hasAny = title || description;
   if (!hasAny) return null;
   return (
     <section className="mb-6 pb-6 border-b border-stone-100">
@@ -80,15 +79,6 @@ function MetadataBlock({ versionDetail }) {
       {description && (
         <p className="text-stone-600 text-sm mb-4">{description}</p>
       )}
-      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-stone-500">
-        {servings != null && <span>{servings} serving{servings !== 1 ? "s" : ""}</span>}
-        {prep != null && <span>Prep: {prep} min</span>}
-        {cook != null && <span>Cook: {cook} min</span>}
-        {total != null && <span>Total: {total} min</span>}
-        {difficulty && <span className="capitalize">{difficulty}</span>}
-        {course && <span className="capitalize">{course}</span>}
-        {cuisine && <span>{cuisine}</span>}
-      </div>
     </section>
   );
 }
@@ -134,6 +124,69 @@ function NotesList({ notes }) {
   );
 }
 
+function ClockIcon({ className }) {
+  return (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function MetaPills({ versionDetail }) {
+  const meta = versionDetail?.metadata || {};
+  const difficulty = meta?.difficulty;
+  const course = meta?.course;
+  const cuisine = meta?.cuisine;
+  const items = [];
+  if (difficulty) items.push({ label: difficulty, key: "difficulty", className: "bg-violet-100 text-violet-800 border-violet-200 hover:bg-violet-200" });
+  if (course) items.push({ label: course, key: "course", className: "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200" });
+  if (cuisine) items.push({ label: cuisine, key: "cuisine", className: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200" });
+  if (items.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-1.5 w-[220px]">
+      {items.map(({ label, key, className }) => (
+        <span
+          key={key}
+          className={`inline-block rounded-md border px-2 py-1 text-xs font-medium capitalize transition-colors ${className}`}
+        >
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function TimeBlock({ versionDetail }) {
+  const meta = versionDetail?.metadata || {};
+  const prep = meta?.prep_time_minutes;
+  const cook = meta?.cook_time_minutes;
+  const total = meta?.total_time_minutes;
+  if (prep == null && cook == null && total == null) return null;
+  const lines = [];
+  if (prep != null) lines.push({ label: "Prep", value: prep });
+  if (cook != null) lines.push({ label: "Cook", value: cook });
+  if (total != null) lines.push({ label: "Total", value: total });
+  return (
+    <div className="w-[220px] rounded-xl border-2 border-stone-200 bg-stone-50 px-4 py-3 text-stone-700 shadow-sm hover:border-stone-300 hover:bg-stone-100/80 transition-colors">
+      <table className="w-full text-sm font-medium">
+        <tbody>
+          {lines.map(({ label, value }, i) => (
+            <tr key={label}>
+              {i === 0 && (
+                <td rowSpan={lines.length} className="w-9 align-middle pr-2 text-stone-500">
+                  <ClockIcon className="h-6 w-6 shrink-0" />
+                </td>
+              )}
+              <td className="py-0.5 text-stone-600">{label}</td>
+              <td className="py-0.5 text-right tabular-nums">{value} min</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function NutritionLabel({ nutrition }) {
   if (!nutrition || typeof nutrition !== "object") return null;
   const rows = [
@@ -146,7 +199,7 @@ function NutritionLabel({ nutrition }) {
   ].filter(([, v]) => v != null && v !== "");
   if (!rows.length) return null;
   return (
-    <div className="rounded border-2 border-stone-800 p-3 w-full max-w-[220px] bg-white shadow-sm">
+    <div className="rounded border-2 border-stone-800 p-3 w-[220px] bg-white shadow-sm">
       <div className="border-b-2 border-stone-800 pb-1 mb-2">
         <p className="text-xl font-bold tracking-tight leading-none">Nutrition Facts</p>
       </div>
@@ -281,9 +334,16 @@ export default function RecipeDetail() {
             <>
               <MetadataBlock versionDetail={versionDetail} />
               <section className="mb-6">
-                <h3 className="text-sm font-medium text-stone-500 mb-2">
-                  Ingredients
-                </h3>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <h3 className="text-sm font-medium text-stone-500">
+                    Ingredients
+                  </h3>
+                  {versionDetail.metadata?.servings != null && (
+                    <span className="inline-block rounded-md border border-stone-200 bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
+                      {versionDetail.metadata.servings} serving{versionDetail.metadata.servings !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
                 <IngredientList ingredients={versionDetail.ingredients} />
               </section>
               <section className="mb-6">
@@ -301,7 +361,15 @@ export default function RecipeDetail() {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 flex flex-col items-center">
+          {versionDetail && (versionDetail.metadata?.difficulty || versionDetail.metadata?.course || versionDetail.metadata?.cuisine) && (
+            <MetaPills versionDetail={versionDetail} />
+          )}
+          {versionDetail && (versionDetail.metadata?.prep_time_minutes != null || versionDetail.metadata?.cook_time_minutes != null || versionDetail.metadata?.total_time_minutes != null) && (
+            <div className="flex justify-center">
+              <TimeBlock versionDetail={versionDetail} />
+            </div>
+          )}
           {versionDetail?.nutrition && Object.keys(versionDetail.nutrition).length > 0 && (
             <div className="flex justify-center">
               <NutritionLabel nutrition={versionDetail.nutrition} />
