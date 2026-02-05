@@ -552,6 +552,13 @@ export default function CookMode() {
           ? `Step ${stepIndex + 1} of ${steps.length}`
           : "";
 
+  const nextButtonLabel =
+    slideIndex === 0
+      ? "Check Ingredients"
+      : slideIndex === 1
+        ? "Start Cooking"
+        : "Next";
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-stone-900">
       <div className="absolute top-4 right-4 z-10">
@@ -656,7 +663,7 @@ export default function CookMode() {
           disabled={slideIndex >= totalSlides - 1}
           className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-600 disabled:bg-stone-700 disabled:hover:bg-stone-700 disabled:text-stone-400"
         >
-          Next <ChevronRightIcon className="h-4 w-4 shrink-0" />
+          {nextButtonLabel} <ChevronRightIcon className="h-4 w-4 shrink-0" />
         </button>
       </div>
     </div>
