@@ -36,6 +36,16 @@ export default function Layout() {
               My recipes
             </Link>
             <Link
+              to="/sessions"
+              className={`text-sm font-medium ${
+                isActive("/sessions")
+                  ? "text-amber-600"
+                  : "text-stone-500 hover:text-stone-700"
+              }`}
+            >
+              My sessions
+            </Link>
+            <Link
               to="/import"
               className={`text-sm font-medium ${
                 isActive("/import")

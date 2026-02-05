@@ -162,7 +162,7 @@ class CookingSessionListCreate(generics.ListCreateAPIView):
         return CookingSession.objects.filter(
             owner=self.request.user,
             recipe_version__recipe__slug=self.kwargs['slug'],
-        ).select_related('recipe_version').order_by('-started_at')
+        ).select_related('recipe_version__recipe').order_by('-started_at')
 
     def get_serializer_class(self):
         return CookingSessionSerializer if self.request.method == 'GET' else CookingSessionCreateSerializer
@@ -214,7 +214,20 @@ class CookingSessionDetail(generics.RetrieveUpdateDestroyAPIView):
         return CookingSession.objects.filter(
             owner=self.request.user,
             recipe_version__recipe__slug=self.kwargs['slug'],
-        ).select_related('recipe_version')
+        ).select_related('recipe_version__recipe')
+
+
+class MyCookingSessionList(generics.ListAPIView):
+    """List all cooking sessions for the authenticated user (any recipe)."""
+    serializer_class = CookingSessionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            CookingSession.objects.filter(owner=self.request.user)
+            .select_related('recipe_version__recipe')
+            .order_by('-started_at')
+        )
 
 
 # ---------- AI endpoints ----------

@@ -13,6 +13,7 @@ urlpatterns = [
     path('recipes/<slug:slug>/versions/<int:pk>/', views.RecipeVersionDetail.as_view()),
     path('recipes/<slug:slug>/sessions/', views.CookingSessionListCreate.as_view()),
     path('recipes/<slug:slug>/sessions/<int:pk>/', views.CookingSessionDetail.as_view()),
+    path('sessions/', views.MyCookingSessionList.as_view()),
     path('ai/guide/', views.ai_guide),
     path('ai/import/', views.ai_import),
     path('ai/voice-command/', views.ai_voice_command),

@@ -157,16 +157,25 @@ class RecipeListSerializer(serializers.ModelSerializer):
 
 class CookingSessionSerializer(serializers.ModelSerializer):
     recipe_version_detail = RecipeVersionSerializer(source='recipe_version', read_only=True)
+    recipe_slug = serializers.SerializerMethodField()
+    recipe_name = serializers.SerializerMethodField()
 
     class Meta:
         model = CookingSession
         fields = [
             'id', 'recipe_version', 'recipe_version_detail',
+            'recipe_slug', 'recipe_name',
             'started_at', 'ended_at', 'current_step_index',
             'log_entries', 'session_notes', 'step_durations_seconds',
             'rating', 'modifications', 'photos',
         ]
         read_only_fields = ['started_at']
+
+    def get_recipe_slug(self, obj):
+        return obj.recipe_version.recipe.slug if obj.recipe_version_id else None
+
+    def get_recipe_name(self, obj):
+        return obj.recipe_version.recipe.name if obj.recipe_version_id else None
 
 
 class CookingSessionCreateSerializer(serializers.ModelSerializer):

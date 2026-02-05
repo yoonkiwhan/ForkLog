@@ -10,6 +10,7 @@ import RecipeDetail from "./pages/RecipeDetail";
 import CookMode from "./pages/CookMode";
 import ImportRecipe from "./pages/ImportRecipe";
 import CreateRecipe from "./pages/CreateRecipe";
+import MyCookingSessions from "./pages/MyCookingSessions";
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="recipes/:slug/cook" element={<CookMode />} />
           <Route path="import" element={<ImportRecipe />} />
           <Route path="create" element={<CreateRecipe />} />
+          <Route path="sessions" element={<MyCookingSessions />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

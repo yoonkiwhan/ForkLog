@@ -78,6 +78,7 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify(body),
       }),
+    listMine: () => request(`/sessions/`),
   },
   ai: {
     guide: (body) =>
