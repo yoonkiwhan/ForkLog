@@ -20,6 +20,27 @@ function stepDurationMinutes(step) {
   return step.duration_minutes ?? null;
 }
 
+function playTimerEndSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const playBeep = (startTime) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = "sine";
+      gain.gain.setValueAtTime(0.2, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.15);
+      osc.start(startTime);
+      osc.stop(startTime + 0.15);
+    };
+    playBeep(0);
+    playBeep(0.2);
+    playBeep(0.4);
+  } catch (_) {}
+}
+
 // ─── Timer ───────────────────────────────────────────────────────────────
 function StepTimer({ defaultMinutes, onTimerEnd, children }) {
   const [minutes, setMinutes] = useState(defaultMinutes);
@@ -38,6 +59,7 @@ function StepTimer({ defaultMinutes, onTimerEnd, children }) {
         if (s <= 1) {
           setRunning(false);
           setEnded(true);
+          playTimerEndSound();
           onTimerEnd?.();
           return 0;
         }
@@ -79,8 +101,13 @@ function StepTimer({ defaultMinutes, onTimerEnd, children }) {
             <button
               type="button"
               onClick={() => setRunning(!running)}
-              className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
             >
+              {running ? (
+                <PauseIcon className="h-4 w-4 shrink-0" />
+              ) : (
+                <PlayIcon className="h-4 w-4 shrink-0" />
+              )}
               {running ? "Pause" : "Start"}
             </button>
           </div>
@@ -191,6 +218,59 @@ function ChevronRightIcon({ className }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M8.25 4.5l7.5 7.5-7.5 7.5"
+      />
+    </svg>
+  );
+}
+function PlayIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path
+        fillRule="evenodd"
+        d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+function PauseIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path
+        fillRule="evenodd"
+        d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0A.75.75 0 0115 4.5h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75V5.25z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+function EyeSlashIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3.108 3.108 0 00-4.38-4.38l-3.65 3.65"
       />
     </svg>
   );
@@ -603,8 +683,9 @@ export default function CookMode() {
               <button
                 type="button"
                 onClick={() => setTimerHidden(true)}
-                className="rounded-lg border border-stone-400 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100"
+                className="inline-flex items-center gap-2 rounded-lg border border-stone-400 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100"
               >
+                <EyeSlashIcon className="h-4 w-4 shrink-0" />
                 Hide
               </button>
             </StepTimer>
