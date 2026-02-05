@@ -104,6 +104,13 @@ class RecipeVersion(models.Model):
 
 class CookingSession(models.Model):
     """A cooking run: user follows a recipe version with AI guidance. Maps to schema cooking_log items."""
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='cooking_sessions',
+        null=True,
+        blank=True,
+    )
     recipe_version = models.ForeignKey(
         RecipeVersion, on_delete=models.CASCADE, related_name='cooking_sessions'
     )
@@ -112,6 +119,8 @@ class CookingSession(models.Model):
     current_step_index = models.PositiveIntegerField(default=0)
     log_entries = models.JSONField(default=list)
     session_notes = models.TextField(blank=True)
+    # Actual time spent per step (seconds), by step index. e.g. [120, 90, 300] = 2min, 1.5min, 5min for steps 0,1,2.
+    step_durations_seconds = models.JSONField(default=list, blank=True)
     # schema cooking_log fields
     rating = models.FloatField(null=True, blank=True)
     modifications = models.TextField(blank=True)
