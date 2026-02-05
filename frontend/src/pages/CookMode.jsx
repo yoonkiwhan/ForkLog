@@ -326,44 +326,72 @@ function PrepSlide({ version }) {
   );
 }
 
-// ─── Ingredients slide (matches first slide style) ─────────────────────────
-function IngredientsSlide({ version, onNext }) {
+// ─── Ingredients slide (list scrollable like Notes & tips) ─────────────────
+function IngredientsSlide({ version }) {
   const ingredients = version?.ingredients ?? [];
+  const listRef = useRef(null);
+  const [showScrollHint, setShowScrollHint] = useState(false);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const check = () => setShowScrollHint(el.scrollHeight > el.clientHeight);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ingredients]);
+
   return (
-    <div className="space-y-8 max-w-6xl mx-auto text-left w-full">
-      <h2 className="text-xl font-semibold text-white">Ingredients</h2>
-      <div>
-        <h3 className="text-sm font-medium text-stone-300 mb-2">
-          You&apos;ll need:
+    <div className="flex flex-col flex-1 min-h-0 w-full max-w-6xl mx-auto text-left">
+      <h2 className="text-xl font-semibold text-white shrink-0">Ingredients</h2>
+      <div className="flex flex-col flex-1 min-h-0 mt-6">
+        <h3 className="text-sm font-medium text-stone-300 mb-2 shrink-0">
+          You&apos;ll need
         </h3>
-        <ul className="space-y-3 text-stone-100">
-          {ingredients.map((ing, i) => {
-            const line =
-              typeof ing === "string"
-                ? ing
-                : [ing.quantity ?? ing.amount, ing.unit, ing.name]
-                    .filter(Boolean)
-                    .join(" ");
-            return (
-              <li key={i} className="flex items-start gap-2">
-                <span className="text-stone-400 select-none">•</span>
-                <span>{line}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-      {onNext && (
-        <div className="pt-4">
-          <button
-            type="button"
-            onClick={onNext}
-            className="rounded-xl bg-amber-500 px-6 py-3 text-base font-medium text-white hover:bg-amber-600"
-          >
-            Start cooking
-          </button>
+        <div
+          ref={listRef}
+          className="flex-1 min-h-0 overflow-y-auto text-stone-100 pr-2"
+        >
+          <ul className="space-y-3">
+            {ingredients.map((ing, i) => {
+              if (typeof ing === "string")
+                return (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-stone-400 select-none">•</span>
+                    <span>{ing}</span>
+                  </li>
+                );
+              const qty = ing.quantity ?? ing.amount;
+              const unit = ing.unit;
+              const name = ing.name;
+              const hasMeasurement =
+                (qty !== undefined && qty !== null && qty !== "") || unit;
+              const optional = ing.optional ? " (optional)" : "";
+              return (
+                <li key={ing.id ?? i} className="flex items-start gap-2">
+                  <span className="text-stone-400 select-none">•</span>
+                  <span>
+                    {hasMeasurement && (
+                      <span className="font-bold text-stone-100">
+                        {[qty, unit].filter(Boolean).join(" ")}
+                      </span>
+                    )}
+                    {hasMeasurement && name && " "}
+                    {name}
+                    {ing.preparation && `, ${ing.preparation}`}
+                    {(ing.notes || ing.note) && ` (${ing.notes || ing.note})`}
+                    {optional}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-      )}
+        {showScrollHint && (
+          <p className="mt-2 text-xs text-stone-400 italic shrink-0">Scroll for more</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -569,10 +597,10 @@ export default function CookMode() {
         className={`flex-1 flex flex-col min-h-0 min-w-0 px-6 pt-16 pb-4 overflow-auto ${isStepSlide ? "" : "flex items-start justify-start"}`}
       >
         {!isStepSlide && (
-          <div className="w-full max-w-6xl mx-auto flex flex-col items-start min-h-0">
+          <div className="w-full max-w-6xl mx-auto flex flex-col items-start min-h-0 flex-1">
             {slideIndex === 0 && <PrepSlide version={version} />}
             {slideIndex === 1 && (
-              <IngredientsSlide version={version} onNext={goNext} />
+              <IngredientsSlide version={version} />
             )}
           </div>
         )}
