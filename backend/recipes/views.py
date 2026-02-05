@@ -230,6 +230,18 @@ class MyCookingSessionList(generics.ListAPIView):
         )
 
 
+class MyCookingSessionDetail(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve/update/delete a cooking session for the authenticated user."""
+    serializer_class = CookingSessionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            CookingSession.objects.filter(owner=self.request.user)
+            .select_related('recipe_version__recipe')
+        )
+
+
 # ---------- AI endpoints ----------
 
 

@@ -67,7 +67,7 @@ export default function MyCookingSessions() {
             return (
               <Link
                 key={s.id}
-                to={`/recipes/${s.recipe_slug || ""}`}
+                to={`/sessions/${s.id}`}
                 className="group block rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-amber-200 hover:shadow-md transition-all"
               >
                 <div className="flex items-center justify-between gap-2">

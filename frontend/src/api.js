@@ -79,6 +79,7 @@ export const api = {
         body: JSON.stringify(body),
       }),
     listMine: () => request(`/sessions/`),
+    getMine: (id) => request(`/sessions/${id}/`),
   },
   ai: {
     guide: (body) =>
