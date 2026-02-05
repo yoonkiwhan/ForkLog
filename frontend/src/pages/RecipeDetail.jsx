@@ -7,14 +7,23 @@ function IngredientList({ ingredients }) {
   return (
     <ul className="space-y-2">
       {ingredients.map((ing, i) => {
-        if (typeof ing === "string") return <li key={i} className="text-stone-600">{ing}</li>;
+        if (typeof ing === "string")
+          return (
+            <li key={i} className="text-stone-600">
+              {ing}
+            </li>
+          );
         const qty = ing.quantity ?? ing.amount;
         const unit = ing.unit;
         const name = ing.name;
-        const hasMeasurement = qty !== undefined && qty !== null && qty !== "" || unit;
+        const hasMeasurement =
+          (qty !== undefined && qty !== null && qty !== "") || unit;
         const optional = ing.optional ? " (optional)" : "";
         return (
-          <li key={ing.id ?? i} className="flex items-start gap-2 text-stone-600">
+          <li
+            key={ing.id ?? i}
+            className="flex items-start gap-2 text-stone-600"
+          >
             <span className="text-stone-400 select-none">•</span>
             <span>
               {hasMeasurement && (
@@ -41,16 +50,25 @@ function StepList({ steps }) {
   return (
     <ol className="space-y-4">
       {sorted.map((s, i) => {
-        const text = typeof s === "string" ? s : (s.instruction ?? s.text ?? "");
-        const duration = typeof s === "object" && s.duration_minutes ? ` — ${s.duration_minutes} min` : "";
-        const stepNotes = typeof s === "object" && s.notes ? ` (${s.notes})` : "";
+        const text =
+          typeof s === "string" ? s : (s.instruction ?? s.text ?? "");
+        const duration =
+          typeof s === "object" && s.duration_minutes
+            ? ` — ${s.duration_minutes} min`
+            : "";
+        const stepNotes =
+          typeof s === "object" && s.notes ? ` (${s.notes})` : "";
         return (
           <li key={s.id ?? i} className="flex gap-3">
             <span className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-100 text-amber-800 text-sm font-medium flex items-center justify-center">
-              {(s.order ?? i + 1)}
+              {s.order ?? i + 1}
             </span>
             <div className="text-stone-600">
-              <span>{text}{duration}{stepNotes}</span>
+              <span>
+                {text}
+                {duration}
+                {stepNotes}
+              </span>
             </div>
           </li>
         );
@@ -74,7 +92,9 @@ function MetadataBlock({ versionDetail }) {
   return (
     <section className="mb-6 pb-6 border-b border-stone-100">
       {title && (
-        <h2 className="font-display font-medium text-lg text-stone-800 mb-3">{title}</h2>
+        <h2 className="font-display font-semibold text-2xl text-stone-800 mb-3">
+          {title}
+        </h2>
       )}
       {description && (
         <p className="text-stone-600 text-sm mb-4">{description}</p>
@@ -104,9 +124,13 @@ function EquipmentList({ equipment }) {
 
 function NotesList({ notes }) {
   if (!notes?.length) return null;
-  const list = notes.every((n) => typeof n === "object" && n !== null && "content" in n)
+  const list = notes.every(
+    (n) => typeof n === "object" && n !== null && "content" in n,
+  )
     ? notes
-    : notes.map((n) => (typeof n === "string" ? { type: "tip", content: n } : n));
+    : notes.map((n) =>
+        typeof n === "string" ? { type: "tip", content: n } : n,
+      );
   return (
     <section className="mb-6">
       <h3 className="text-sm font-medium text-stone-500 mb-2">Notes & tips</h3>
@@ -114,7 +138,9 @@ function NotesList({ notes }) {
         {list.map((n, i) => (
           <li key={i} className="flex gap-2 text-sm text-stone-600">
             {n.type && (
-              <span className="capitalize text-stone-400 font-medium shrink-0">{n.type}:</span>
+              <span className="capitalize text-stone-400 font-medium shrink-0">
+                {n.type}:
+              </span>
             )}
             <span>{n.content ?? n}</span>
           </li>
@@ -126,8 +152,40 @@ function NotesList({ notes }) {
 
 function ClockIcon({ className }) {
   return (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
+}
+
+function PersonIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+      />
     </svg>
   );
 }
@@ -138,9 +196,27 @@ function MetaPills({ versionDetail }) {
   const course = meta?.course;
   const cuisine = meta?.cuisine;
   const items = [];
-  if (difficulty) items.push({ label: difficulty, key: "difficulty", className: "bg-violet-100 text-violet-800 border-violet-200 hover:bg-violet-200" });
-  if (course) items.push({ label: course, key: "course", className: "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200" });
-  if (cuisine) items.push({ label: cuisine, key: "cuisine", className: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200" });
+  if (difficulty)
+    items.push({
+      label: difficulty,
+      key: "difficulty",
+      className:
+        "bg-violet-100 text-violet-800 border-violet-200 hover:bg-violet-200",
+    });
+  if (course)
+    items.push({
+      label: course,
+      key: "course",
+      className:
+        "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200",
+    });
+  if (cuisine)
+    items.push({
+      label: cuisine,
+      key: "cuisine",
+      className:
+        "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200",
+    });
   if (items.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center justify-center gap-1.5 w-[220px]">
@@ -173,7 +249,10 @@ function TimeBlock({ versionDetail }) {
           {lines.map(({ label, value }, i) => (
             <tr key={label}>
               {i === 0 && (
-                <td rowSpan={lines.length} className="w-9 align-middle pr-2 text-stone-500">
+                <td
+                  rowSpan={lines.length}
+                  className="w-9 align-middle pr-2 text-stone-500"
+                >
                   <ClockIcon className="h-6 w-6 shrink-0" />
                 </td>
               )}
@@ -201,7 +280,9 @@ function NutritionLabel({ nutrition }) {
   return (
     <div className="rounded border-2 border-stone-800 p-3 w-[220px] bg-white shadow-sm">
       <div className="border-b-2 border-stone-800 pb-1 mb-2">
-        <p className="text-xl font-bold tracking-tight leading-none">Nutrition Facts</p>
+        <p className="text-xl font-bold tracking-tight leading-none">
+          Nutrition Facts
+        </p>
       </div>
       <p className="text-xs font-semibold text-stone-600 mb-2">Per serving</p>
       <table className="w-full text-sm">
@@ -210,7 +291,8 @@ function NutritionLabel({ nutrition }) {
             <tr key={label} className="border-b border-stone-200 last:border-0">
               <td className="py-0.5 pr-2 text-stone-600">{label}</td>
               <td className="py-0.5 text-right font-bold text-stone-800 tabular-nums">
-                {value}{unit}
+                {value}
+                {unit}
               </td>
             </tr>
           ))}
@@ -275,7 +357,8 @@ export default function RecipeDetail() {
   }, [slug, selectedVersionId, recipe?.latest_version?.id]);
 
   const selectedVersion = selectedVersionId
-    ? versions.find((v) => v.id === selectedVersionId) ?? recipe?.latest_version
+    ? (versions.find((v) => v.id === selectedVersionId) ??
+      recipe?.latest_version)
     : null;
 
   if (loading) {
@@ -295,13 +378,13 @@ export default function RecipeDetail() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Link to="/" className="text-stone-400 hover:text-stone-600 text-sm">
           ← Recipes
         </Link>
-        <h1 className="font-display font-semibold text-2xl text-stone-800">
+        {/* <h1 className="font-display font-semibold text-2xl text-stone-800">
           {recipe.name}
-        </h1>
+        </h1> */}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr,280px]">
@@ -339,8 +422,10 @@ export default function RecipeDetail() {
                     Ingredients
                   </h3>
                   {versionDetail.metadata?.servings != null && (
-                    <span className="inline-block rounded-md border border-stone-200 bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
-                      {versionDetail.metadata.servings} serving{versionDetail.metadata.servings !== 1 ? "s" : ""}
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
+                      <PersonIcon className="h-3.5 w-3.5 shrink-0" />
+                      {versionDetail.metadata.servings} serving
+                      {versionDetail.metadata.servings !== 1 ? "s" : ""}
                     </span>
                   )}
                 </div>
@@ -352,8 +437,8 @@ export default function RecipeDetail() {
                 </h3>
                 <StepList steps={versionDetail.steps} />
               </section>
-              <EquipmentList equipment={versionDetail.equipment} />
               <NotesList notes={versionDetail.notes} />
+              <EquipmentList equipment={versionDetail.equipment} />
               <TagsList tags={versionDetail.tags} />
             </>
           ) : (
@@ -362,19 +447,26 @@ export default function RecipeDetail() {
         </div>
 
         <div className="space-y-6 flex flex-col items-center">
-          {versionDetail && (versionDetail.metadata?.difficulty || versionDetail.metadata?.course || versionDetail.metadata?.cuisine) && (
-            <MetaPills versionDetail={versionDetail} />
-          )}
-          {versionDetail && (versionDetail.metadata?.prep_time_minutes != null || versionDetail.metadata?.cook_time_minutes != null || versionDetail.metadata?.total_time_minutes != null) && (
-            <div className="flex justify-center">
-              <TimeBlock versionDetail={versionDetail} />
-            </div>
-          )}
-          {versionDetail?.nutrition && Object.keys(versionDetail.nutrition).length > 0 && (
-            <div className="flex justify-center">
-              <NutritionLabel nutrition={versionDetail.nutrition} />
-            </div>
-          )}
+          {versionDetail &&
+            (versionDetail.metadata?.difficulty ||
+              versionDetail.metadata?.course ||
+              versionDetail.metadata?.cuisine) && (
+              <MetaPills versionDetail={versionDetail} />
+            )}
+          {versionDetail &&
+            (versionDetail.metadata?.prep_time_minutes != null ||
+              versionDetail.metadata?.cook_time_minutes != null ||
+              versionDetail.metadata?.total_time_minutes != null) && (
+              <div className="flex justify-center">
+                <TimeBlock versionDetail={versionDetail} />
+              </div>
+            )}
+          {versionDetail?.nutrition &&
+            Object.keys(versionDetail.nutrition).length > 0 && (
+              <div className="flex justify-center">
+                <NutritionLabel nutrition={versionDetail.nutrition} />
+              </div>
+            )}
           <div className="space-y-4">
             <Link
               to={`/recipes/${slug}/cook`}
