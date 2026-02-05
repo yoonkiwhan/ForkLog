@@ -2,6 +2,18 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 
+function formatDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now - d;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return d.toLocaleDateString();
+}
+
 export default function RecipeList() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +44,7 @@ export default function RecipeList() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h1 className="font-display font-semibold text-2xl text-stone-800">
           My recipes
         </h1>
@@ -51,8 +63,9 @@ export default function RecipeList() {
           </Link>
         </div>
       </div>
+
       {recipes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50/50 p-12 text-center text-stone-500">
+        <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50/50 p-12 text-center text-stone-500">
           <p className="mb-4">You haven’t created any recipes yet.</p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
@@ -70,23 +83,33 @@ export default function RecipeList() {
           </div>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {recipes.map((r) => (
-            <li key={r.id}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {recipes.map((r) => {
+            const title = r.latest_version?.title || r.name;
+            const versionLabel = r.latest_version?.version?.number || (r.latest_version ? `v${r.latest_version.version_number}` : null);
+            return (
               <Link
+                key={r.id}
                 to={`/recipes/${r.slug}`}
-                className="block rounded-lg border border-stone-200 bg-white px-4 py-3 hover:border-amber-200 hover:shadow-sm transition-all"
+                className="group block rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-amber-200 hover:shadow-md transition-all"
               >
-                <span className="font-medium text-stone-800">{r.name}</span>
-                {r.latest_version && (
-                  <span className="ml-2 text-sm text-stone-400">
-                    v{r.latest_version.version_number}
-                  </span>
-                )}
+                <h2 className="font-semibold text-stone-800 group-hover:text-amber-700 transition-colors truncate">
+                  {title}
+                </h2>
+                <div className="mt-2 flex items-center gap-2 text-sm text-stone-500">
+                  {versionLabel && (
+                    <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium text-stone-600">
+                      {versionLabel}
+                    </span>
+                  )}
+                  {r.updated_at && (
+                    <span>{formatDate(r.updated_at)}</span>
+                  )}
+                </div>
               </Link>
-            </li>
-          ))}
-        </ul>
+            );
+          })}
+        </div>
       )}
     </div>
   );
