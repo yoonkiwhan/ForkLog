@@ -20,7 +20,7 @@ function stepDurationMinutes(step) {
   return step.duration_minutes ?? null;
 }
 
-function playTimerEndSound() {
+function playTimerBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const playBeep = (startTime) => {
@@ -47,7 +47,9 @@ function StepTimer({ defaultMinutes, onTimerEnd, children }) {
   const [secondsRemaining, setSecondsRemaining] = useState(defaultMinutes * 60);
   const [running, setRunning] = useState(false);
   const [ended, setEnded] = useState(false);
+  const [flashRed, setFlashRed] = useState(true);
   const intervalRef = useRef(null);
+  const alarmIntervalRef = useRef(null);
 
   const displayM = Math.floor(secondsRemaining / 60);
   const displayS = secondsRemaining % 60;
@@ -59,7 +61,6 @@ function StepTimer({ defaultMinutes, onTimerEnd, children }) {
         if (s <= 1) {
           setRunning(false);
           setEnded(true);
-          playTimerEndSound();
           onTimerEnd?.();
           return 0;
         }
@@ -71,6 +72,34 @@ function StepTimer({ defaultMinutes, onTimerEnd, children }) {
     };
   }, [running, onTimerEnd]);
 
+  // Looping alarm while ended
+  useEffect(() => {
+    if (!ended) return;
+    playTimerBeep();
+    alarmIntervalRef.current = setInterval(playTimerBeep, 1200);
+    return () => {
+      if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
+    };
+  }, [ended]);
+
+  // Flashing red/white while ended
+  useEffect(() => {
+    if (!ended) return;
+    const flash = setInterval(() => setFlashRed((r) => !r), 400);
+    return () => clearInterval(flash);
+  }, [ended]);
+
+  const dismissAlarm = () => {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+    setEnded(false);
+    setRunning(false);
+    setMinutes(defaultMinutes);
+    setSecondsRemaining(defaultMinutes * 60);
+  };
+
   const setNewTimer = () => {
     setSecondsRemaining(minutes * 60);
     setEnded(false);
@@ -81,6 +110,20 @@ function StepTimer({ defaultMinutes, onTimerEnd, children }) {
     setMinutes(val);
     if (!running) setSecondsRemaining(val * 60);
   };
+
+  if (ended) {
+    return (
+      <button
+        type="button"
+        onClick={dismissAlarm}
+        className={`w-full rounded-xl border-2 border-red-300 p-4 text-center font-semibold transition-colors duration-100 ${
+          flashRed ? "bg-red-500 text-white" : "bg-white text-red-600"
+        }`}
+      >
+        Timer ended — tap to stop alarm
+      </button>
+    );
+  }
 
   return (
     <div className="rounded-xl border-2 border-amber-200 bg-amber-50/80 p-4 space-y-3">
@@ -113,34 +156,21 @@ function StepTimer({ defaultMinutes, onTimerEnd, children }) {
           </div>
         )}
       </div>
-      {ended ? (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-amber-800 font-medium">Timer ended.</span>
-          <button
-            type="button"
-            onClick={setNewTimer}
-            className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-50"
-          >
-            Set new timer
-          </button>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2 text-sm">
+          <label className="text-stone-600">Duration (min):</label>
+          <input
+            type="number"
+            min={0}
+            max={999}
+            value={minutes}
+            onChange={(e) => applyMinutes(parseInt(e.target.value, 10) || 0)}
+            className="w-20 rounded border border-stone-200 px-2 py-1 text-stone-800"
+            disabled={running}
+          />
         </div>
-      ) : (
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-2 text-sm">
-            <label className="text-stone-600">Duration (min):</label>
-            <input
-              type="number"
-              min={0}
-              max={999}
-              value={minutes}
-              onChange={(e) => applyMinutes(parseInt(e.target.value, 10) || 0)}
-              className="w-20 rounded border border-stone-200 px-2 py-1 text-stone-800"
-              disabled={running}
-            />
-          </div>
-          {children}
-        </div>
-      )}
+        {children}
+      </div>
     </div>
   );
 }
