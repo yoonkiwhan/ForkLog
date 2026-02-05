@@ -543,6 +543,15 @@ export default function CookMode() {
     ? (stepDurationMinutes(currentStep) ?? 10)
     : 10;
 
+  const slideTitle =
+    slideIndex === 0
+      ? "Before you start"
+      : slideIndex === 1
+        ? "Ingredients"
+        : isStepSlide && steps.length
+          ? `Step ${stepIndex + 1} of ${steps.length}`
+          : "";
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-stone-900">
       <div className="absolute top-4 right-4 z-10">
@@ -639,7 +648,7 @@ export default function CookMode() {
           <ChevronLeftIcon className="h-4 w-4 shrink-0" /> Previous
         </button>
         <span className="text-sm text-stone-300">
-          {slideIndex + 1} / {totalSlides}
+          {slideTitle}
         </span>
         <button
           type="button"
