@@ -612,17 +612,20 @@ export default function CookMode() {
         </div>
       )}
 
-      {/* Minimized timer: Show Timer button at bottom-right of overlay */}
+      {/* Minimized timer: Show Timer button aligned with bottom-right of timer window */}
       {isStepSlide && currentStep && timerHidden && (
-        <button
-          type="button"
-          onClick={() => setTimerHidden(false)}
-          className="absolute z-20 inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-amber-600"
-          style={{ right: 24, bottom: 80 }}
-        >
-          <ClockIcon className="h-4 w-4 shrink-0" />
-          Show Timer
-        </button>
+        <div className="shrink-0 px-6 pb-4">
+          <div className="max-w-6xl mx-auto flex justify-end">
+            <button
+              type="button"
+              onClick={() => setTimerHidden(false)}
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-amber-600"
+            >
+              <ClockIcon className="h-4 w-4 shrink-0" />
+              Show Timer
+            </button>
+          </div>
+        </div>
       )}
 
       <div className="shrink-0 flex items-center justify-center gap-4 py-3">
