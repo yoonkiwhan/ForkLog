@@ -14,7 +14,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(RecipeVersion)
 class RecipeVersionAdmin(admin.ModelAdmin):
-    list_display = ('recipe', 'version_number', 'version_semver', 'title', 'owner', 'is_public', 'commit_message', 'created_at')
+    list_display = ('recipe', 'version_number', 'version_semver', 'title', 'main_picture', 'owner', 'is_public', 'commit_message', 'created_at')
     list_filter = ('recipe', 'is_public')
     search_fields = ('title', 'recipe__name', 'commit_message')
     raw_id_fields = ('parent_version', 'owner')

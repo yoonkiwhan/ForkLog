@@ -85,6 +85,7 @@ class RecipeVersion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     title = models.CharField(max_length=255, blank=True)  # denormalized from metadata.title
+    main_picture = models.URLField(max_length=2048, blank=True, help_text='URL of the main recipe image.')
     # metadata (schemas/recipe.json): title, language (ISO 639-1), translated_title, description, source,
     # cuisine, course, dietary_tags, prep/cook/total_time_minutes, servings, difficulty, rating
     metadata = models.JSONField(default=dict, blank=True)

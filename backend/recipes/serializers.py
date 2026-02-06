@@ -59,7 +59,7 @@ class RecipeVersionSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeVersion
         fields = [
-            'id', 'recipe', 'owner', 'version_number', 'version', 'title', 'is_public', 'metadata',
+            'id', 'recipe', 'owner', 'version_number', 'version', 'title', 'main_picture', 'is_public', 'metadata',
             'ingredients', 'steps', 'equipment', 'notes', 'nutrition', 'tags',
             'created_at', 'commit_message', 'message', 'author', 'parent_version',
             'version_semver',
@@ -96,7 +96,7 @@ class RecipeVersionListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeVersion
-        fields = ['id', 'version_number', 'version', 'title', 'owner', 'is_public', 'created_at', 'commit_message', 'message']
+        fields = ['id', 'version_number', 'version', 'title', 'main_picture', 'owner', 'is_public', 'created_at', 'commit_message', 'message']
 
     def get_version(self, obj):
         return _version_to_schema_version(obj)
