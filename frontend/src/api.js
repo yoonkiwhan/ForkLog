@@ -65,21 +65,21 @@ export const api = {
     delete: (slug, id) =>
       request(`/recipes/${slug}/versions/${id}/`, { method: "DELETE" }),
   },
-  sessions: {
-    list: (slug) => request(`/recipes/${slug}/sessions/`),
-    get: (slug, id) => request(`/recipes/${slug}/sessions/${id}/`),
+  meals: {
+    list: (slug) => request(`/recipes/${slug}/meals/`),
+    get: (slug, id) => request(`/recipes/${slug}/meals/${id}/`),
     create: (slug, body) =>
-      request(`/recipes/${slug}/sessions/`, {
+      request(`/recipes/${slug}/meals/`, {
         method: "POST",
         body: JSON.stringify(body),
       }),
     update: (slug, id, body) =>
-      request(`/recipes/${slug}/sessions/${id}/`, {
+      request(`/recipes/${slug}/meals/${id}/`, {
         method: "PATCH",
         body: JSON.stringify(body),
       }),
-    listMine: () => request(`/sessions/`),
-    getMine: (id) => request(`/sessions/${id}/`),
+    listMine: () => request(`/meals/`),
+    getMine: (id) => request(`/meals/${id}/`),
   },
   ai: {
     guide: (body) =>

@@ -1,5 +1,5 @@
 """
-API views for recipes, versions, and cooking sessions.
+API views for recipes, versions, and meals.
 """
 
 from django.db import models
@@ -8,15 +8,15 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Recipe, RecipeVersion, CookingSession
+from .models import Recipe, RecipeVersion, Meal
 from .serializers import (
     RecipeSerializer,
     RecipeCreateSerializer,
     RecipeListSerializer,
     RecipeVersionSerializer,
     RecipeVersionListSerializer,
-    CookingSessionSerializer,
-    CookingSessionCreateSerializer,
+    MealSerializer,
+    MealCreateSerializer,
 )
 from .services import (
     ai_guide_message,
@@ -152,20 +152,20 @@ class RecipeVersionDetail(generics.RetrieveUpdateDestroyAPIView):
         )
 
 
-# ---------- Cooking sessions ----------
+# ---------- Meals ----------
 
 
-class CookingSessionListCreate(generics.ListCreateAPIView):
+class MealListCreate(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return CookingSession.objects.filter(
+        return Meal.objects.filter(
             owner=self.request.user,
             recipe_version__recipe__slug=self.kwargs['slug'],
         ).select_related('recipe_version__recipe').order_by('-started_at')
 
     def get_serializer_class(self):
-        return CookingSessionSerializer if self.request.method == 'GET' else CookingSessionCreateSerializer
+        return MealSerializer if self.request.method == 'GET' else MealCreateSerializer
 
     def create(self, request, *args, **kwargs):
         slug = kwargs.get('slug')
@@ -183,7 +183,7 @@ class CookingSessionListCreate(generics.ListCreateAPIView):
         step_durations = request.data.get('step_durations_seconds')
         if not isinstance(step_durations, list):
             step_durations = []
-        session = CookingSession.objects.create(
+        meal = Meal.objects.create(
             owner=request.user,
             recipe_version=version,
             ended_at=request.data.get('ended_at'),
@@ -198,46 +198,46 @@ class CookingSessionListCreate(generics.ListCreateAPIView):
         if request.data.get('started_at'):
             parsed = parse_datetime(request.data['started_at'])
             if parsed:
-                session.started_at = parsed
-                session.save(update_fields=['started_at'])
+                meal.started_at = parsed
+                meal.save(update_fields=['started_at'])
         return Response(
-            CookingSessionSerializer(session).data,
+            MealSerializer(meal).data,
             status=status.HTTP_201_CREATED,
         )
 
 
-class CookingSessionDetail(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = CookingSessionSerializer
+class MealDetail(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = MealSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return CookingSession.objects.filter(
+        return Meal.objects.filter(
             owner=self.request.user,
             recipe_version__recipe__slug=self.kwargs['slug'],
         ).select_related('recipe_version__recipe')
 
 
-class MyCookingSessionList(generics.ListAPIView):
-    """List all cooking sessions for the authenticated user (any recipe)."""
-    serializer_class = CookingSessionSerializer
+class MyMealList(generics.ListAPIView):
+    """List all meals for the authenticated user (any recipe)."""
+    serializer_class = MealSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return (
-            CookingSession.objects.filter(owner=self.request.user)
+            Meal.objects.filter(owner=self.request.user)
             .select_related('recipe_version__recipe')
             .order_by('-started_at')
         )
 
 
-class MyCookingSessionDetail(generics.RetrieveUpdateDestroyAPIView):
-    """Retrieve/update/delete a cooking session for the authenticated user."""
-    serializer_class = CookingSessionSerializer
+class MyMealDetail(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve/update/delete a meal for the authenticated user."""
+    serializer_class = MealSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return (
-            CookingSession.objects.filter(owner=self.request.user)
+            Meal.objects.filter(owner=self.request.user)
             .select_related('recipe_version__recipe')
         )
 

@@ -3,7 +3,7 @@ DRF serializers for recipes API. Output matches schemas/recipe.json where applic
 """
 
 from rest_framework import serializers
-from .models import Recipe, RecipeVersion, CookingSession
+from .models import Recipe, RecipeVersion, Meal
 
 
 def _version_to_schema_version(v):
@@ -155,13 +155,13 @@ class RecipeListSerializer(serializers.ModelSerializer):
         return RecipeVersionListSerializer(v).data
 
 
-class CookingSessionSerializer(serializers.ModelSerializer):
+class MealSerializer(serializers.ModelSerializer):
     recipe_version_detail = RecipeVersionSerializer(source='recipe_version', read_only=True)
     recipe_slug = serializers.SerializerMethodField()
     recipe_name = serializers.SerializerMethodField()
 
     class Meta:
-        model = CookingSession
+        model = Meal
         fields = [
             'id', 'recipe_version', 'recipe_version_detail',
             'recipe_slug', 'recipe_name',
@@ -178,9 +178,9 @@ class CookingSessionSerializer(serializers.ModelSerializer):
         return obj.recipe_version.recipe.name if obj.recipe_version_id else None
 
 
-class CookingSessionCreateSerializer(serializers.ModelSerializer):
+class MealCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CookingSession
+        model = Meal
         fields = [
             'recipe_version', 'started_at', 'ended_at', 'current_step_index',
             'log_entries', 'session_notes', 'step_durations_seconds',

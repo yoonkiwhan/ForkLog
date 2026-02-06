@@ -28,7 +28,7 @@ export default function Layout() {
               to="/"
               className={`text-sm font-medium ${
                 isActive("/") &&
-                !location.pathname.match(/\/cook\/|\/import|\/create/)
+                !location.pathname.match(/\/cook\/|\/import|\/create|\/meals/)
                   ? "text-amber-600"
                   : "text-stone-500 hover:text-stone-700"
               }`}
@@ -36,14 +36,14 @@ export default function Layout() {
               My recipes
             </Link>
             <Link
-              to="/sessions"
+              to="/meals"
               className={`text-sm font-medium ${
-                isActive("/sessions")
+                isActive("/meals")
                   ? "text-amber-600"
                   : "text-stone-500 hover:text-stone-700"
               }`}
             >
-              My sessions
+              My meals
             </Link>
             <Link
               to="/import"

@@ -14,15 +14,15 @@ function formatDate(iso) {
   return d.toLocaleDateString();
 }
 
-export default function MyCookingSessions() {
-  const [sessions, setSessions] = useState([]);
+export default function MyMeals() {
+  const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.sessions
+    api.meals
       .listMine()
-      .then(setSessions)
+      .then(setMeals)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -30,7 +30,7 @@ export default function MyCookingSessions() {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <div className="animate-pulse text-stone-400">Loading sessions…</div>
+        <div className="animate-pulse text-stone-400">Loading meals…</div>
       </div>
     );
   }
@@ -47,17 +47,17 @@ export default function MyCookingSessions() {
     <div>
       <div className="flex items-center justify-between gap-4 mb-6">
         <h1 className="font-display font-semibold text-2xl text-stone-800">
-          My cooking sessions
+          My meals
         </h1>
       </div>
 
-      {sessions.length === 0 ? (
+      {meals.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50/50 p-8 text-center text-stone-500">
-          No cooking sessions yet.
+          No meals yet.
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sessions.map((s) => {
+          {meals.map((s) => {
             const title = s.recipe_name || s.recipe_version_detail?.title || "Recipe";
             const ver =
               s.recipe_version_detail?.version?.number ||
@@ -67,7 +67,7 @@ export default function MyCookingSessions() {
             return (
               <Link
                 key={s.id}
-                to={`/sessions/${s.id}`}
+                to={`/meals/${s.id}`}
                 className="group block rounded-2xl border border-stone-200 bg-white p-5 shadow-sm hover:border-amber-200 hover:shadow-md transition-all"
               >
                 <div className="flex items-center justify-between gap-2">

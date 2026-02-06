@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Recipe, RecipeVersion, CookingSession, ParsedRecipeCache
+from .models import Recipe, RecipeVersion, Meal, ParsedRecipeCache
 
 
 @admin.register(Recipe)
@@ -20,8 +20,8 @@ class RecipeVersionAdmin(admin.ModelAdmin):
     raw_id_fields = ('parent_version',)
 
 
-@admin.register(CookingSession)
-class CookingSessionAdmin(admin.ModelAdmin):
+@admin.register(Meal)
+class MealAdmin(admin.ModelAdmin):
     list_display = ('recipe_version', 'started_at', 'ended_at', 'current_step_index', 'rating')
     list_filter = ('recipe_version__recipe',)
 

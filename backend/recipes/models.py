@@ -102,17 +102,17 @@ class RecipeVersion(models.Model):
         return f'{self.recipe.name} v{self.version_number}'
 
 
-class CookingSession(models.Model):
-    """A cooking run: user follows a recipe version with AI guidance. Maps to schema cooking_log items."""
+class Meal(models.Model):
+    """A meal: user follows a recipe version and logs the result."""
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='cooking_sessions',
+        related_name='meals',
         null=True,
         blank=True,
     )
     recipe_version = models.ForeignKey(
-        RecipeVersion, on_delete=models.CASCADE, related_name='cooking_sessions'
+        RecipeVersion, on_delete=models.CASCADE, related_name='meals'
     )
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True, blank=True)
@@ -128,9 +128,11 @@ class CookingSession(models.Model):
 
     class Meta:
         ordering = ['-started_at']
+        verbose_name = 'Meal'
+        verbose_name_plural = 'Meals'
 
     def __str__(self):
-        return f'Cooking {self.recipe_version} at {self.started_at}'
+        return f'Meal: {self.recipe_version} at {self.started_at}'
 
 
 class ParsedRecipeCache(models.Model):

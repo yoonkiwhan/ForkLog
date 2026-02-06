@@ -753,7 +753,7 @@ export default function CookMode() {
               id="finish-dialog-title"
               className="text-lg font-semibold text-white mb-4"
             >
-              Save cooking session
+              Save meal
             </h2>
             <div className="space-y-4 mb-6">
               <div>
@@ -770,7 +770,7 @@ export default function CookMode() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-stone-300 mb-1">
-                  Session notes
+                  Notes
                 </label>
                 <textarea
                   value={finishForm.session_notes}
@@ -832,7 +832,7 @@ export default function CookMode() {
                   setFinishSaving(true);
                   setFinishSaveError(null);
                   try {
-                    await api.sessions.create(slug, {
+                    await api.meals.create(slug, {
                       recipe_version: version.id,
                       started_at: finishSessionData.started_at,
                       ended_at: finishSessionData.ended_at,
@@ -855,7 +855,7 @@ export default function CookMode() {
                     });
                     navigate(`/recipes/${slug}`);
                   } catch (err) {
-                    setFinishSaveError(err.message || "Failed to save session");
+                    setFinishSaveError(err.message || "Failed to save meal");
                   } finally {
                     setFinishSaving(false);
                   }
