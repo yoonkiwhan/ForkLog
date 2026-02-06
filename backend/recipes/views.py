@@ -91,9 +91,11 @@ class RecipeListCreate(generics.ListCreateAPIView):
         if ingredients or steps or metadata or tags:
             RecipeVersion.objects.create(
                 recipe=recipe,
+                owner=self.request.user,
                 version_number=1,
                 version_semver='1.0.0',
                 title=title,
+                is_public=data.get('is_public', False),
                 metadata={**metadata, 'title': title},
                 ingredients=ingredients,
                 steps=steps,
@@ -138,7 +140,7 @@ class RecipeVersionList(generics.ListCreateAPIView):
         next_num = (recipe.versions.aggregate(
             mx=models.Max('version_number')
         ).get('mx') or 0) + 1
-        serializer.save(recipe=recipe, version_number=next_num)
+        serializer.save(recipe=recipe, version_number=next_num, owner=self.request.user)
 
 
 class RecipeVersionDetail(generics.RetrieveUpdateDestroyAPIView):

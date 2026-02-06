@@ -50,25 +50,43 @@ function StepList({ steps }) {
   return (
     <ol className="space-y-4">
       {sorted.map((s, i) => {
+        const title = typeof s === "object" ? (s.title ?? null) : null;
         const text =
-          typeof s === "string" ? s : (s.instruction ?? s.text ?? "");
+          typeof s === "string" ? s : (s.instruction ?? s.instructions ?? s.text ?? "");
         const duration =
           typeof s === "object" && s.duration_minutes
             ? ` — ${s.duration_minutes} min`
             : "";
         const stepNotes =
           typeof s === "object" && s.notes ? ` (${s.notes})` : "";
+        const pictures = typeof s === "object" ? (s.media ?? s.pictures ?? []) : [];
+        const urls = Array.isArray(pictures) ? pictures : [];
         return (
           <li key={s.id ?? i} className="flex gap-3">
             <span className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-100 text-amber-800 text-sm font-medium flex items-center justify-center">
               {s.order ?? i + 1}
             </span>
-            <div className="text-stone-600">
+            <div className="text-stone-600 min-w-0">
+              {title && (
+                <div className="font-medium text-stone-800 mb-0.5">{title}</div>
+              )}
               <span>
                 {text}
                 {duration}
                 {stepNotes}
               </span>
+              {urls.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {urls.map((url, j) => (
+                    <img
+                      key={j}
+                      src={url}
+                      alt={title || `Step ${s.order ?? i + 1}`}
+                      className="rounded-lg max-h-32 object-cover"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </li>
         );

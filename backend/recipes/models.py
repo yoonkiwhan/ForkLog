@@ -65,8 +65,16 @@ class RecipeVersion(models.Model):
     version (semver, parent, commit_message, author), metadata, ingredients, steps,
     equipment, notes (array), nutrition, tags.
     """
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='recipe_versions',
+        null=True,
+        blank=True,
+    )
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='versions')
     version_number = models.PositiveIntegerField()
+    is_public = models.BooleanField(default=False, help_text='If False, only owner can see this version.')
     # version block (schema)
     version_semver = models.CharField(max_length=32, blank=True)  # e.g. "1.2.0"
     parent_version = models.ForeignKey(
@@ -82,7 +90,7 @@ class RecipeVersion(models.Model):
     metadata = models.JSONField(default=dict, blank=True)
     # ingredients: [{ id, name, quantity, unit, preparation, notes, group, optional }]
     ingredients = models.JSONField(default=list, blank=True)
-    # steps: [{ id, order, instruction, duration_minutes, temperature, timer, notes, media }]
+    # steps: [{ id, order, title, instruction, duration_minutes, temperature, timer, notes, media (pictures: list of URLs) }]
     steps = models.JSONField(default=list, blank=True)
     equipment = models.JSONField(default=list, blank=True)  # list of strings
     # notes: [{ type: "tip"|"substitution"|"storage"|"variation"|"warning", content }]

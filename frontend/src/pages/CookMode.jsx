@@ -12,7 +12,18 @@ function stepText(step) {
   if (step == null) return "";
   return typeof step === "string"
     ? step
-    : (step.instruction ?? step.text ?? "");
+    : (step.instruction ?? step.instructions ?? step.text ?? "");
+}
+
+function stepTitle(step) {
+  if (step == null || typeof step !== "object") return null;
+  return step.title ?? null;
+}
+
+function stepPictures(step) {
+  if (step == null || typeof step !== "object") return [];
+  const urls = step.media ?? step.pictures ?? [];
+  return Array.isArray(urls) ? urls : [];
 }
 
 function stepDurationMinutes(step) {
@@ -516,7 +527,9 @@ function StepSlideContent({
   totalSteps,
   stepStartTime,
 }) {
+  const title = stepTitle(step);
   const text = stepText(step);
+  const pictures = stepPictures(step);
   return (
     <div className="space-y-6 max-w-6xl mx-auto text-left px-2 w-full">
       <div className="text-sm text-stone-300">
@@ -527,9 +540,26 @@ function StepSlideContent({
           </span>
         )}
       </div>
+      {title && (
+        <h2 className="text-xl font-semibold text-stone-100">
+          {title}
+        </h2>
+      )}
       <p className="text-lg font-light text-stone-100 leading-relaxed">
         {text}
       </p>
+      {pictures.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          {pictures.map((url, i) => (
+            <img
+              key={i}
+              src={url}
+              alt={`Step ${stepNumber}`}
+              className="rounded-lg max-h-48 object-cover"
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
