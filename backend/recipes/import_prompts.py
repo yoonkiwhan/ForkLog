@@ -17,6 +17,8 @@ RECIPE_IMPORT_SYSTEM_PROMPT = """You are a recipe extraction specialist. Your jo
 8. Extract equipment mentioned in the recipe
 9. Identify dietary tags based on ingredients (vegetarian, vegan, gluten-free, etc.)
 10. Detect the language of the recipe and preserve original text appropriately
+11. Sort the notes list appropriately, consolidate redundant or similar notes.
+12. Include all urls for pictures appropriately. Make sure to include a url for the main picture.
 
 **Multilingual Support:**
 For non-English recipes (e.g., Korean, Japanese, Spanish):
